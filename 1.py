@@ -7,10 +7,56 @@ char_name = 'chars/midas.png'
 
 pygame.init()
 size = w, h = 500, 500
-pygame.display.set_caption('gg')
+game.display.set_caption("Reverenge Georgis")
 FPS = 50
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
+
+
+class Button:
+    def __init__(self, width, height):
+        self.width, self.height = width, height
+        self.button_click = pygame.mixer.Sound("data/button.wav")
+
+    def draw(self, x, y, text, function=None):
+        # function передает вызов функции или саму функцию,допустим начало игры или выход
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_clicked = pygame.mouse.get_pressed()
+        pygame.draw.rect(screen, (0, 0, 255), (x, y, self.width, self.height), 0)
+        print_text(text, x + 10, y + 10, (255, 255, 255))
+        if x < mouse_pos[0] < x + self.width:
+            if y < mouse_pos[1] < y + self.height:
+                if mouse_clicked[0] == 1:
+                    pygame.mixer.Sound.play(self.button_click)
+                    pygame.time.delay(500)
+                    if function is not None:
+                        if function == "exit":
+                            terminate()
+                        elif function == "play":
+                            play()
+
+
+#функция для печатания текста
+def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
+    font_type = pygame.font.SysFont('arial', font_size)
+    message = font_type.render(text, True, font_color)
+    screen.blit(message, (x, y))
+
+
+def show_menu():
+    image_background = pygame.image.load("data/menu_bg.jpg").convert_alpha()
+    show = True
+    start_game_button = Button(230, 70)
+    quit_game_button = Button(100, 70)
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+        screen.blit(image_background, (0, 0))
+        print_text("Reverenge Georgis", 0, 0, (243, 165, 5), 70)
+        start_game_button.draw(120, 100, "Start Game", "play")
+        quit_game_button.draw(180, 300, "Quit", "exit")
+        pygame.display.flip()
 
 
 def terminate():
@@ -98,56 +144,56 @@ class Camera:
         self.dy = h // 2 - (target.rect.y + target.rect.h // 2)
 
 
-try:
-    load_level(name)
-except Exception:
-    print('Неверное название уровня!!!')
-    terminate()
-camera = Camera()
-all_sprites = pygame.sprite.Group()
-player_image = load_image(char_name)
-tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
-box_g = pygame.sprite.Group()
-player = None
-player, level_x, level_y = generate(load_level(name))
-running = True
-goup = godown = goleft = goright = False
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            terminate()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                goleft = True
-            if event.key == pygame.K_RIGHT:
-                goright = True
-            if event.key == pygame.K_UP:
-                goup = True
-            if event.key == pygame.K_DOWN:
-                godown = True
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT:
-                goleft = False
-            if event.key == pygame.K_RIGHT:
-                goright = False
-            if event.key == pygame.K_UP:
-                goup = False
-            if event.key == pygame.K_DOWN:
-                godown = False
-    if godown:
-        player.rect.y += 2
-    if goup:
-        player.rect.y -= 2
-    if goleft:
-        player.rect.x -= 2
-    if goright:
-        player.rect.x += 2
-    camera.update(player)
-    for sprite in all_sprites:
-        camera.apply(sprite)
-    screen.fill((0, 0, 0))
-    tiles_group.draw(screen)
-    player_group.draw(screen)
-    pygame.display.flip()
-    clock.tick(FPS)
+def play():
+    global all_sprites, all_sprites, tiles_group, player_group, box_g
+    camera = Camera()
+    camera = Camera()
+    all_sprites = pygame.sprite.Group()
+    player_image = load_image(char_name)
+    tiles_group = pygame.sprite.Group()
+    player_group = pygame.sprite.Group()
+    box_g = pygame.sprite.Group()
+    player = None
+    player, level_x, level_y = generate(load_level(name))
+    running = True
+    goup = godown = goleft = goright = False
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    goleft = True
+                if event.key == pygame.K_RIGHT:
+                    goright = True
+                if event.key == pygame.K_UP:
+                    goup = True
+                if event.key == pygame.K_DOWN:
+                    godown = True
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT:
+                    goleft = False
+                if event.key == pygame.K_RIGHT:
+                    goright = False
+                if event.key == pygame.K_UP:
+                    goup = False
+                if event.key == pygame.K_DOWN:
+                    godown = False
+        if godown:
+            player.rect.y += 2
+        if goup:
+            player.rect.y -= 2
+        if goleft:
+            player.rect.x -= 2
+        if goright:
+            player.rect.x += 2
+        camera.update(player)
+        for sprite in all_sprites:
+            camera.apply(sprite)
+        screen.fill((0, 0, 0))
+        tiles_group.draw(screen)
+        player_group.draw(screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+show_menu()
