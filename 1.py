@@ -170,6 +170,8 @@ def play():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    show_menu()
                 if event.key == pygame.K_LEFT:
                     goleft = True
                 if event.key == pygame.K_RIGHT:
