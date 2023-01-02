@@ -34,6 +34,8 @@ class Button:
                             terminate()
                         elif function == "play":
                             play()
+                        elif function == "menu":
+                            show_menu()
 
 
 #функция для печатания текста
@@ -52,6 +54,9 @@ def show_menu():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    play()
         screen.blit(image_background, (0, 0))
         print_text("Reverenge Georgis", 0, 0, (243, 165, 5), 70)
         start_game_button.draw(120, 100, "Start Game", "play")
@@ -146,7 +151,7 @@ class Camera:
 
 def play():
     global all_sprites, all_sprites, tiles_group, player_group, box_g
-    camera = Camera()
+    back_to_menu_button = Button(50, 50)
     camera = Camera()
     all_sprites = pygame.sprite.Group()
     player_image = load_image(char_name)
@@ -157,8 +162,11 @@ def play():
     player, level_x, level_y = generate(load_level(name))
     running = True
     goup = godown = goleft = goright = False
+    icon = load_image("menu_btn.png")
+    rect = icon.get_rect()
     while running:
         for event in pygame.event.get():
+            back_to_menu_button.draw(450, 0, "menu", "back_to menu")
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
@@ -193,6 +201,8 @@ def play():
         screen.fill((0, 0, 0))
         tiles_group.draw(screen)
         player_group.draw(screen)
+        move_icon = rect.move(450, 0)
+        screen.blit(icon, move_icon)
         pygame.display.flip()
         clock.tick(FPS)
 
