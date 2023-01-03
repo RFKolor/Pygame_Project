@@ -150,7 +150,8 @@ class Camera:
 
 
 def play():
-    global all_sprites, all_sprites, tiles_group, player_group, box_g
+    global all_sprites, all_sprites, tiles_group, player_group, box_g, player,  level_x, level_y,\
+            player_image
     back_to_menu_button = Button(50, 50)
     camera = Camera()
     all_sprites = pygame.sprite.Group()
