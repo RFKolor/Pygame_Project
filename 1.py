@@ -17,6 +17,7 @@ class Button:
     def __init__(self, width, height):
         self.width, self.height = width, height
         self.button_click = pygame.mixer.Sound("data/button.wav")
+        self.start_game = pygame.mixer.Sound("data/start_game.mp3")
 
     def draw(self, x, y, text, function=None):
         # function передает вызов функции или саму функцию,допустим начало игры или выход
@@ -167,7 +168,7 @@ def play():
     rect = icon.get_rect()
     while running:
         for event in pygame.event.get():
-            back_to_menu_button.draw(450, 0, "menu", "back_to menu")
+            back_to_menu_button.draw(450, 0, "menu", "menu")
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
