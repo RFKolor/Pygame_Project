@@ -7,7 +7,7 @@ char_name = 'chars/midas.png'
 
 pygame.init()
 size = w, h = 500, 500
-game.display.set_caption("Reverenge Georgis")
+pygame.display.set_caption("Reverenge Georgis")
 FPS = 50
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
