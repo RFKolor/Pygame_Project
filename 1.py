@@ -1,19 +1,23 @@
 import pygame
 import os
 import sys
+import random
 
 name = 'level1.txt'
-char_name = 'chars/midas.png'
+char_name = 'midas'
 
 pygame.init()
-size = w, h = 500, 500
+size = w, h = 500, 850
 pygame.display.set_caption("Reverenge Georgis")
-FPS = 50
+FPS = 60
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 #пока босс жив переменна true, когда босс повержен переменная меняется на false,используется для
 #экрана окончания
 georgis = True
+spavnpoint = 0
+enemis = []
+enemis_speed = 1
 
 
 class Button:
@@ -124,6 +128,11 @@ def load_image(name, colorkey=None):
 
 
 tile = load_image('ground.png')
+cube_images = [load_image('enemis/cube.png'), load_image('enemis/cube1.png'),
+               load_image('enemis/cube2.png'), load_image('enemis/cube3.png')]
+if char_name == 'midas':
+    player_images = [load_image('chars/midas.png'), load_image('chars/midas1-3.png'),
+                     load_image('chars/midas2.png'), load_image('chars/midas1-3.png')]
 tile_w = tile_h = 50
 
 
@@ -146,11 +155,52 @@ class Tile(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
+    def __init__(self, pos_x, pos_y, frame):
         super().__init__(player_group, all_sprites)
-        self.image = player_image
+        self.image = player_images[frame]
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(tile_w * pos_x + 15, tile_h * pos_y + 5)
+
+
+class Cube(pygame.sprite.Sprite):
+    def __init__(self, frame):
+        super().__init__(enemi_group, all_sprites)
+        self.image = cube_images[frame]
+        self.rect = self.image.get_rect()
+        if random.choice((0, 1)) == 1:
+            self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
+        else:
+            self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
+
+    def mislitelniy_process(self):
+        rastoyanie_x = self.rect.x - player.rect.x
+        rastoyanie_y = self.rect.y - player.rect.y
+        if rastoyanie_y != 0 and rastoyanie_x != 0:
+            if rastoyanie_x > rastoyanie_y:
+                koef = abs(rastoyanie_x) / abs(rastoyanie_y)
+                if koef < 1:
+                    koef = 1
+                self.rect = self.rect.move(enemis_speed *
+                                           -(rastoyanie_x / abs(rastoyanie_x)),
+                                           enemis_speed *
+                                           -(rastoyanie_y / abs(rastoyanie_y)) / koef)
+            elif rastoyanie_x < rastoyanie_y:
+                koef = abs(rastoyanie_y) / abs(rastoyanie_x)
+                if koef < 1:
+                    koef = 1
+                self.rect = self.rect.move(enemis_speed *
+                                           -(rastoyanie_x / abs(rastoyanie_x)) / koef,
+                                           enemis_speed *
+                                           -(rastoyanie_y / abs(rastoyanie_y)))
+            else:
+                self.rect = self.rect.move(enemis_speed *
+                                           -(rastoyanie_x / abs(rastoyanie_x)),
+                                           enemis_speed *
+                                           -(rastoyanie_y / abs(rastoyanie_y)))
+        elif rastoyanie_x == 0 and rastoyanie_y != 0:
+            self.rect.y += enemis_speed * -(rastoyanie_y / abs(rastoyanie_y))
+        elif rastoyanie_y == 0 and rastoyanie_x != 0:
+            self.rect.x += enemis_speed * -(rastoyanie_x / abs(rastoyanie_x))
 
 
 def generate(level):
@@ -161,7 +211,7 @@ def generate(level):
                 Tile('empty', x, y)
             elif level[y][x] == '@':
                 Tile('empty', x, y)
-                new_player = Player(x, y)
+                new_player = Player(x, y, 0)
     return new_player, x, y
 
 
@@ -189,25 +239,33 @@ class Camera:
 
 #игровой цикл
 def play():
-    global all_sprites, all_sprites, tiles_group, player_group, box_g, player,  level_x, level_y,\
-            player_image
+    global all_sprites, enemi_group, tiles_group, player_group, box_g, player, \
+        level_x, level_y, player_image
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(0.5)
     pygame.mixer.music.play(-1)
     back_to_menu_button = Button(50, 50)
     camera = Camera()
     all_sprites = pygame.sprite.Group()
-    player_image = load_image(char_name)
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
+    enemi_group = pygame.sprite.Group()
     box_g = pygame.sprite.Group()
     player = None
+    cube = None
     player, level_x, level_y = generate(load_level(name))
     running = True
     goup = godown = goleft = goright = False
     icon = load_image("menu_btn.png")
     rect = icon.get_rect()
     while running:
+        global spavnpoint
+        spavnpoint += 1
+        if spavnpoint % 300 == 0:
+            cube = Cube(0)
+            enemis.append(cube)
+        for i in enemis:
+            i.mislitelniy_process()
         for event in pygame.event.get():
             back_to_menu_button.draw(450, 0, "menu", "menu")
             if event.type == pygame.QUIT:
@@ -248,6 +306,7 @@ def play():
         screen.fill((0, 0, 0))
         tiles_group.draw(screen)
         player_group.draw(screen)
+        enemi_group.draw(screen)
         move_icon = rect.move(450, 0)
         screen.blit(icon, move_icon)
         pygame.display.flip()
