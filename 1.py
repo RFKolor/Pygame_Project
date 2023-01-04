@@ -11,13 +11,15 @@ pygame.display.set_caption("Reverenge Georgis")
 FPS = 50
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
+#пока босс жив переменна true, когда босс повержен переменная меняется на false,используется для
+#экрана окончания
+georgis = True
 
 
 class Button:
     def __init__(self, width, height):
         self.width, self.height = width, height
         self.button_click = pygame.mixer.Sound("data/button.wav")
-        self.start_game = pygame.mixer.Sound("data/start_game.mp3")
 
     def draw(self, x, y, text, function=None):
         # function передает вызов функции или саму функцию,допустим начало игры или выход
@@ -46,7 +48,42 @@ def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
     screen.blit(message, (x, y))
 
 
+#меню окончания игры
+def end_game():
+    pygame.mixer.music.load("data/menu.mp3")
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)
+    image_background = pygame.image.load("data/menu_bg.jpg").convert_alpha()
+    show = True
+    start_game_button = Button(150, 70)
+    quit_game_button = Button(100, 70)
+    if georgis:
+        text = "You Win!"
+        color = (0, 255, 0)
+    else:
+        text = "You Lose"
+        color = (255, 0, 0)
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    show_menu()
+                if event.key == pygame.K_RETURN:
+                    play()
+        screen.blit(image_background, (0, 0))
+        print_text(text, 130, 180, color, 70)
+        start_game_button.draw(0, 430, "Restart", "play")
+        quit_game_button.draw(400, 430, "Quit", "exit")
+        pygame.display.flip()
+
+
+#главное меню
 def show_menu():
+    pygame.mixer.music.load("data/menu.mp3")
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)
     image_background = pygame.image.load("data/menu_bg.jpg").convert_alpha()
     show = True
     start_game_button = Button(230, 70)
@@ -150,9 +187,13 @@ class Camera:
         self.dy = h // 2 - (target.rect.y + target.rect.h // 2)
 
 
+#игровой цикл
 def play():
     global all_sprites, all_sprites, tiles_group, player_group, box_g, player,  level_x, level_y,\
             player_image
+    pygame.mixer.music.load("data/gameplay_music.mp3")
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)
     back_to_menu_button = Button(50, 50)
     camera = Camera()
     all_sprites = pygame.sprite.Group()
@@ -174,6 +215,8 @@ def play():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     show_menu()
+                if event.key == pygame.K_m:
+                    end_game()
                 if event.key == pygame.K_LEFT:
                     goleft = True
                 if event.key == pygame.K_RIGHT:
@@ -209,5 +252,6 @@ def play():
         screen.blit(icon, move_icon)
         pygame.display.flip()
         clock.tick(FPS)
+
 
 show_menu()
