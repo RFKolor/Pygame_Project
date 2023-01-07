@@ -158,6 +158,7 @@ class Tile(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, frame):
         super().__init__(player_group, all_sprites)
+        self.heals = 1000
         self.image = player_images[frame]
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(tile_w * pos_x + 15, tile_h * pos_y + 5)
@@ -166,6 +167,7 @@ class Player(pygame.sprite.Sprite):
 class Cube(pygame.sprite.Sprite):
     def __init__(self, frame):
         super().__init__(enemi_group, all_sprites)
+        self.damage = 1
         self.image = cube_images[frame]
         self.rect = self.image.get_rect()
         self.heals = 1
@@ -208,6 +210,11 @@ class Cube(pygame.sprite.Sprite):
             self.kill()
         if self.rect.collidelistall(proj):
             self.heals -= damage
+        if self.rect.colliderect(player.rect):
+            player.heals -= self.damage
+            print(player.heals)
+            if player.heals <= 0:
+                player.kill()
 
 
 class Bullet(pygame.sprite.Sprite):
