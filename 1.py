@@ -2,12 +2,15 @@ import pygame
 import os
 import sys
 import random
+import pygame_widgets
+from pygame_widgets.slider import Slider
+from pygame_widgets.textbox import TextBox
 
 name = 'level1.txt'
 char_name = 'midas'
 
 pygame.init()
-size = w, h = 500, 850
+size = w, h = 500, 845
 pygame.display.set_caption("Reverenge Georgis")
 FPS = 60
 screen = pygame.display.set_mode(size)
@@ -19,6 +22,7 @@ spavnpoint = 0
 enemis = []
 enemis_speed = 1
 damage = 5
+music_volume = 0.5
 
 
 class Button:
@@ -30,7 +34,7 @@ class Button:
         # function передает вызов функции или саму функцию,допустим начало игры или выход
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = pygame.mouse.get_pressed()
-        pygame.draw.rect(screen, (0, 0, 255), (x, y, self.width, self.height), 0)
+        pygame.draw.rect(screen, (76, 81, 74), (x, y, self.width, self.height), 0)
         print_text(text, x + 10, y + 10, (255, 255, 255))
         if x < mouse_pos[0] < x + self.width:
             if y < mouse_pos[1] < y + self.height:
@@ -44,6 +48,8 @@ class Button:
                             play()
                         elif function == "menu":
                             show_menu()
+                        elif function == "settings":
+                            settings()
 
 
 #функция для печатания текста
@@ -84,15 +90,45 @@ def end_game():
         pygame.display.flip()
 
 
+#настройки игры(звук)
+def settings():
+    global music_volume
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
+    show = True
+    slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81, 74),
+                    handleColour=(255, 255, 255))
+    accept_btn = Button(150, 70)
+    #заготовка, в дальнейшем,если возможно будет возможность выбора трека в меню и в самой игре
+    music_btn = Button(125,  70)
+    help_btn = Button(25, 70)
+    while show:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                terminate()
+            screen.blit(image_background, (0, 0))
+            accept_btn.draw(175, 680, "Accept", "menu")
+            #изменение громкости музыки
+            print_text(f"volume of music {slider.getValue()}%", 25, 230, (166, 189, 215), 30)
+            print_text("Settings", 150, 0, (90, 0, 0), 70)
+            print_text("Volume", 180, 120, (166, 189, 215), 50)
+
+            music_volume = slider.getValue() * 0.01
+            pygame_widgets.update(events)
+            pygame.display.update()
+    pygame.display.flip()
+
+
 #главное меню
 def show_menu():
     pygame.mixer.music.load("data/menu.mp3")
-    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
-    image_background = pygame.image.load("data/menu_bg.jpg").convert_alpha()
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
     show = True
     start_game_button = Button(230, 70)
     quit_game_button = Button(100, 70)
+    setting_game_button = Button(150, 70)
     while show:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -101,9 +137,11 @@ def show_menu():
                 if event.key == pygame.K_RETURN:
                     play()
         screen.blit(image_background, (0, 0))
-        print_text("Reverenge Georgis", 0, 0, (243, 165, 5), 70)
-        start_game_button.draw(120, 100, "Start Game", "play")
-        quit_game_button.draw(180, 300, "Quit", "exit")
+        print_text("Reverenge Georgis", 0, 0, (90, 0, 0), 70)
+        print_text("Exclusive edition", 100, 90, (166, 189, 215), 50)
+        start_game_button.draw(135, 255, "Start Game", "play")
+        setting_game_button.draw(175, 425, "Setting", "settings")
+        quit_game_button.draw(200, 595, "Quit", "exit")
         pygame.display.flip()
 
 
@@ -228,6 +266,7 @@ class Bullet(pygame.sprite.Sprite):
         self.x = go_x
         self.y = go_y
         self.speed = [0, 0]
+        self.attack_sound = pygame.mixer.Sound("data/range_attack.mp3")
         self.rastoyanie_x = self.rect.x - self.x
         self.rastoyanie_y = self.rect.y - self.y
         if self.rastoyanie_y != 0 and self.rastoyanie_x != 0:
@@ -247,6 +286,9 @@ class Bullet(pygame.sprite.Sprite):
         elif self.rastoyanie_y == 0 and self.rastoyanie_x != 0:
             self.speed[0] = 5 * -(self.rastoyanie_x / abs(self.rastoyanie_x))
 
+    def sound(self):
+        pygame.mixer.Sound.play(self.attack_sound)
+
     def go(self):
         self.rect = self.rect.move(self.speed[0], self.speed[1])
         if self.rect.x > 500 or self.rect.x < 0 or self.rect.y > 850 or self.rect.y < 0:
@@ -255,7 +297,6 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.collidelistall(enemis):
             self.kill()
             self.live = False
-
 
 
 def generate(level):
@@ -297,7 +338,7 @@ def play():
     global all_sprites, enemi_group, tiles_group, player_group, box_g, player, \
         level_x, level_y, player_image, proj_group, proj
     pygame.mixer.music.load("data/gameplay_music.mp3")
-    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
     back_to_menu_button = Button(50, 50)
     camera = Camera()
@@ -358,7 +399,7 @@ def play():
                     pos = pygame.mouse.get_pos()
                     bullet = Bullet(235, 410, pos[0], pos[1])
                     proj.append(bullet)
-
+                    bullet.sound()
         if godown:
             player.rect.y += 2
         if goup:
