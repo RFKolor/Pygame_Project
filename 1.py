@@ -167,6 +167,7 @@ class Player(pygame.sprite.Sprite):
 class Cube(pygame.sprite.Sprite):
     def __init__(self, frame):
         super().__init__(enemi_group, all_sprites)
+        self.live = True
         self.damage = 1
         self.image = cube_images[frame]
         self.rect = self.image.get_rect()
@@ -208,11 +209,11 @@ class Cube(pygame.sprite.Sprite):
                 self.rect.x += enemis_speed * -(rastoyanie_x / abs(rastoyanie_x))
         else:
             self.kill()
+            self.live = False
         if self.rect.collidelistall(proj):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
-            print(player.heals)
             if player.heals <= 0:
                 player.kill()
 
@@ -220,6 +221,7 @@ class Cube(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, go_x, go_y):
         super().__init__(proj_group)
+        self.live = True
         self.image = load_image('bullet.png')
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(x, y)
@@ -249,8 +251,10 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.rect.move(self.speed[0], self.speed[1])
         if self.rect.x > 500 or self.rect.x < 0 or self.rect.y > 850 or self.rect.y < 0:
             self.kill()
+            self.live = False
         if self.rect.collidelistall(enemis):
             self.kill()
+            self.live = False
 
 
 
@@ -317,8 +321,12 @@ def play():
             enemis.append(Cube(0))
         for i in enemis:
             i.mislitelniy_process()
+            if i.live == False:
+                enemis.remove(i)
         for j in proj:
             j.go()
+            if j.live == False:
+                proj.remove(j)
         for event in pygame.event.get():
             back_to_menu_button.draw(450, 0, "menu", "menu")
             if event.type == pygame.QUIT:
