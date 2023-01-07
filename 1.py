@@ -18,6 +18,7 @@ georgis = True
 spavnpoint = 0
 enemis = []
 enemis_speed = 1
+damage = 5
 
 
 class Button:
@@ -167,40 +168,83 @@ class Cube(pygame.sprite.Sprite):
         super().__init__(enemi_group, all_sprites)
         self.image = cube_images[frame]
         self.rect = self.image.get_rect()
+        self.heals = 1
         if random.choice((0, 1)) == 1:
             self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
         else:
             self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
 
     def mislitelniy_process(self):
-        rastoyanie_x = self.rect.x - player.rect.x
-        rastoyanie_y = self.rect.y - player.rect.y
-        if rastoyanie_y != 0 and rastoyanie_x != 0:
-            if rastoyanie_x > rastoyanie_y:
-                koef = abs(rastoyanie_x) / abs(rastoyanie_y)
-                if koef < 1:
-                    koef = 1
-                self.rect = self.rect.move(enemis_speed *
-                                           -(rastoyanie_x / abs(rastoyanie_x)),
-                                           enemis_speed *
-                                           -(rastoyanie_y / abs(rastoyanie_y)) / koef)
-            elif rastoyanie_x < rastoyanie_y:
-                koef = abs(rastoyanie_y) / abs(rastoyanie_x)
-                if koef < 1:
-                    koef = 1
-                self.rect = self.rect.move(enemis_speed *
-                                           -(rastoyanie_x / abs(rastoyanie_x)) / koef,
-                                           enemis_speed *
-                                           -(rastoyanie_y / abs(rastoyanie_y)))
+        if self.heals > 0:
+            rastoyanie_x = self.rect.x - player.rect.x
+            rastoyanie_y = self.rect.y - player.rect.y
+            if rastoyanie_y != 0 and rastoyanie_x != 0:
+                if rastoyanie_x > rastoyanie_y:
+                    koef = abs(rastoyanie_x) / abs(rastoyanie_y)
+                    if koef < 1:
+                        koef = 1
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)),
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)) / koef)
+                elif rastoyanie_x < rastoyanie_y:
+                    koef = abs(rastoyanie_y) / abs(rastoyanie_x)
+                    if koef < 1:
+                        koef = 1
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)) / koef,
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)))
+                else:
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)),
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)))
+            elif rastoyanie_x == 0 and rastoyanie_y != 0:
+                self.rect.y += enemis_speed * -(rastoyanie_y / abs(rastoyanie_y))
+            elif rastoyanie_y == 0 and rastoyanie_x != 0:
+                self.rect.x += enemis_speed * -(rastoyanie_x / abs(rastoyanie_x))
+        else:
+            self.kill()
+        if self.rect.collidelistall(proj):
+            self.heals -= damage
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, go_x, go_y):
+        super().__init__(proj_group)
+        self.image = load_image('bullet.png')
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(x, y)
+        self.x = go_x
+        self.y = go_y
+        self.speed = [0, 0]
+        self.rastoyanie_x = self.rect.x - self.x
+        self.rastoyanie_y = self.rect.y - self.y
+        if self.rastoyanie_y != 0 and self.rastoyanie_x != 0:
+            if abs(self.rastoyanie_x) > abs(self.rastoyanie_y):
+                koef = abs(self.rastoyanie_x) / abs(self.rastoyanie_y)
+                self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                              5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)) / koef)
+            elif abs(self.rastoyanie_x) < abs(self.rastoyanie_y):
+                koef = abs(self.rastoyanie_y) / abs(self.rastoyanie_x)
+                self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)) / koef,
+                              5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
             else:
-                self.rect = self.rect.move(enemis_speed *
-                                           -(rastoyanie_x / abs(rastoyanie_x)),
-                                           enemis_speed *
-                                           -(rastoyanie_y / abs(rastoyanie_y)))
-        elif rastoyanie_x == 0 and rastoyanie_y != 0:
-            self.rect.y += enemis_speed * -(rastoyanie_y / abs(rastoyanie_y))
-        elif rastoyanie_y == 0 and rastoyanie_x != 0:
-            self.rect.x += enemis_speed * -(rastoyanie_x / abs(rastoyanie_x))
+                self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                              5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+        elif self.rastoyanie_x == 0 and self.rastoyanie_y != 0:
+            self.speed[1] = 5 * -(self.rastoyanie_y / abs(self.rastoyanie_y))
+        elif self.rastoyanie_y == 0 and self.rastoyanie_x != 0:
+            self.speed[0] = 5 * -(self.rastoyanie_x / abs(self.rastoyanie_x))
+
+    def go(self):
+        self.rect = self.rect.move(self.speed[0], self.speed[1])
+        if self.rect.x > 500 or self.rect.x < 0 or self.rect.y > 850 or self.rect.y < 0:
+            self.kill()
+        if self.rect.collidelistall(enemis):
+            self.kill()
+
 
 
 def generate(level):
@@ -240,19 +284,20 @@ class Camera:
 #игровой цикл
 def play():
     global all_sprites, enemi_group, tiles_group, player_group, box_g, player, \
-        level_x, level_y, player_image
+        level_x, level_y, player_image, proj_group, proj
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(0.5)
     pygame.mixer.music.play(-1)
     back_to_menu_button = Button(50, 50)
     camera = Camera()
+    proj = []
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
+    proj_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     enemi_group = pygame.sprite.Group()
     box_g = pygame.sprite.Group()
     player = None
-    cube = None
     player, level_x, level_y = generate(load_level(name))
     running = True
     goup = godown = goleft = goright = False
@@ -262,10 +307,11 @@ def play():
         global spavnpoint
         spavnpoint += 1
         if spavnpoint % 300 == 0:
-            cube = Cube(0)
-            enemis.append(cube)
+            enemis.append(Cube(0))
         for i in enemis:
             i.mislitelniy_process()
+        for j in proj:
+            j.go()
         for event in pygame.event.get():
             back_to_menu_button.draw(450, 0, "menu", "menu")
             if event.type == pygame.QUIT:
@@ -292,6 +338,12 @@ def play():
                     goup = False
                 if event.key == pygame.K_DOWN:
                     godown = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    pos = pygame.mouse.get_pos()
+                    bullet = Bullet(235, 410, pos[0], pos[1])
+                    proj.append(bullet)
+
         if godown:
             player.rect.y += 2
         if goup:
@@ -307,6 +359,7 @@ def play():
         tiles_group.draw(screen)
         player_group.draw(screen)
         enemi_group.draw(screen)
+        proj_group.draw(screen)
         move_icon = rect.move(450, 0)
         screen.blit(icon, move_icon)
         pygame.display.flip()
