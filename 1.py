@@ -10,19 +10,24 @@ name = 'level1.txt'
 char_name = 'midas'
 
 pygame.init()
-size = w, h = 500, 845
+size = w, h = 500, 840
 pygame.display.set_caption("Reverenge Georgis")
 FPS = 60
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
-#пока босс жив переменна true, когда босс повержен переменная меняется на false,используется для
-#экрана окончания
-georgis = True
+# пока босс жив переменна true, когда босс повержен переменная меняется на false,используется для
+# экрана окончания
+georgis = False
 spavnpoint = 0
 enemis = []
 enemis_speed = 1
 damage = 5
 music_volume = 0.5
+# костыль чтобы слайдер корректно работал
+slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81, 74),
+                handleColour=(255, 255, 255))
+#количество очков заработанных за 1 забаег
+point = 0
 
 
 class Button:
@@ -52,19 +57,21 @@ class Button:
                             settings()
 
 
-#функция для печатания текста
+# функция для печатания текста
 def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
     font_type = pygame.font.SysFont('arial', font_size)
     message = font_type.render(text, True, font_color)
     screen.blit(message, (x, y))
 
 
-#меню окончания игры
+# меню окончания игры
 def end_game():
+    global point
+    global music_volume
     pygame.mixer.music.load("data/menu.mp3")
-    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
-    image_background = pygame.image.load("data/menu_bg.jpg").convert_alpha()
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
     show = True
     start_game_button = Button(150, 70)
     quit_game_button = Button(100, 70)
@@ -85,21 +92,20 @@ def end_game():
                     play()
         screen.blit(image_background, (0, 0))
         print_text(text, 130, 180, color, 70)
-        start_game_button.draw(0, 430, "Restart", "play")
-        quit_game_button.draw(400, 430, "Quit", "exit")
+        print_text(f"You score {point}", 100, 383, (76, 81, 74), 70)
+        start_game_button.draw(0, 775, "Restart", "play")
+        quit_game_button.draw(400, 775, "Quit", "exit")
         pygame.display.flip()
 
 
-#настройки игры(звук)
+# настройки игры(звук)
 def settings():
     global music_volume
     image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
     show = True
-    slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81, 74),
-                    handleColour=(255, 255, 255))
     accept_btn = Button(150, 70)
-    #заготовка, в дальнейшем,если возможно будет возможность выбора трека в меню и в самой игре
-    music_btn = Button(125,  70)
+    # заготовка, в дальнейшем,если возможно будет возможность выбора трека в меню и в самой игре
+    music_btn = Button(125, 70)
     help_btn = Button(25, 70)
     while show:
         events = pygame.event.get()
@@ -108,7 +114,7 @@ def settings():
                 terminate()
             screen.blit(image_background, (0, 0))
             accept_btn.draw(175, 680, "Accept", "menu")
-            #изменение громкости музыки
+            # изменение громкости музыки
             print_text(f"volume of music {slider.getValue()}%", 25, 230, (166, 189, 215), 30)
             print_text("Settings", 150, 0, (90, 0, 0), 70)
             print_text("Volume", 180, 120, (166, 189, 215), 50)
@@ -119,7 +125,7 @@ def settings():
     pygame.display.flip()
 
 
-#главное меню
+# главное меню
 def show_menu():
     pygame.mixer.music.load("data/menu.mp3")
     pygame.mixer.music.set_volume(music_volume)
@@ -183,6 +189,10 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_widht, '.'), map_level))
 
 
+def itembar(key):
+    pass
+
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
@@ -216,6 +226,7 @@ class Cube(pygame.sprite.Sprite):
             self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
 
     def mislitelniy_process(self):
+        global point
         if self.heals > 0:
             rastoyanie_x = self.rect.x - player.rect.x
             rastoyanie_y = self.rect.y - player.rect.y
@@ -248,12 +259,15 @@ class Cube(pygame.sprite.Sprite):
         else:
             self.kill()
             self.live = False
+            point += 1
         if self.rect.collidelistall(proj):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
+            print(player.heals)
             if player.heals <= 0:
                 player.kill()
+                end_game()
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -333,10 +347,10 @@ class Camera:
         self.dy = h // 2 - (target.rect.y + target.rect.h // 2)
 
 
-#игровой цикл
+# игровой цикл
 def play():
     global all_sprites, enemi_group, tiles_group, player_group, box_g, player, \
-        level_x, level_y, player_image, proj_group, proj
+           level_x, level_y, player_image, proj_group, proj
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -355,6 +369,10 @@ def play():
     goup = godown = goleft = goright = False
     icon = load_image("menu_btn.png")
     rect = icon.get_rect()
+    max_health = player.heals * 0.1 + 10
+    hp = player.heals * 0.1
+    #кнопки для item bar
+    item_1, item_2, item_3, item_4, item_5 = Button(50, 50)
     while running:
         global spavnpoint
         spavnpoint += 1
@@ -416,6 +434,11 @@ def play():
         player_group.draw(screen)
         enemi_group.draw(screen)
         proj_group.draw(screen)
+        #hp bar
+        pygame.draw.rect(screen, (0, 0, 0), (5, 5, max_health, 40), 5)
+        pygame.draw.rect(screen, (255, 0, 0), (10, 10, player.heals * 0.1, 30))
+        print_text(f"{round(player.heals * 0.1)}", hp / 2 - (5 * hp * 0.01), 12, (0, 0, 0), 20)
+        #иконка выходы в меню(паузы)
         move_icon = rect.move(450, 0)
         screen.blit(icon, move_icon)
         pygame.display.flip()
