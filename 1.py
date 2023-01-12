@@ -28,6 +28,12 @@ slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81
                 handleColour=(255, 255, 255))
 #количество очков заработанных за 1 забаег
 point = 0
+mnoj_hp_cube = 0.01
+mnoj_dmg_cube = 0.01
+mnoj_spavnrate_cube = 0.1
+heals_cube = 1
+damage_cube = 1
+spavnrate_cube = 200
 
 
 class Button:
@@ -92,8 +98,11 @@ def end_game():
                     play()
         screen.blit(image_background, (0, 0))
         print_text(text, 130, 180, color, 70)
-        print_text(f"You score {point}", 100, 383, (76, 81, 74), 70)
+        print_text(f"Your score {point}", 100, 383, (76, 81, 74), 70)
         start_game_button.draw(0, 775, "Restart", "play")
+        global enemis, proj
+        enemis = []
+        proj = []
         quit_game_button.draw(400, 775, "Quit", "exit")
         pygame.display.flip()
 
@@ -207,6 +216,9 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, frame):
         super().__init__(player_group, all_sprites)
         self.heals = 1000
+        self.atakspeed = 25
+        self.atak = 1
+        self.gold = 0
         self.image = player_images[frame]
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(tile_w * pos_x + 15, tile_h * pos_y + 5)
@@ -216,10 +228,10 @@ class Cube(pygame.sprite.Sprite):
     def __init__(self, frame):
         super().__init__(enemi_group, all_sprites)
         self.live = True
-        self.damage = 1
+        self.damage = damage_cube
         self.image = cube_images[frame]
         self.rect = self.image.get_rect()
-        self.heals = 1
+        self.heals = heals_cube
         if random.choice((0, 1)) == 1:
             self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
         else:
@@ -264,7 +276,6 @@ class Cube(pygame.sprite.Sprite):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
-            print(player.heals)
             if player.heals <= 0:
                 player.kill()
                 end_game()
@@ -277,6 +288,7 @@ class Bullet(pygame.sprite.Sprite):
         self.image = load_image('bullet.png')
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(x, y)
+        self.heals = 1
         self.x = go_x
         self.y = go_y
         self.speed = [0, 0]
@@ -350,13 +362,17 @@ class Camera:
 # игровой цикл
 def play():
     global all_sprites, enemi_group, tiles_group, player_group, box_g, player, \
-           level_x, level_y, player_image, proj_group, proj
+           level_x, level_y, player_image, proj_group, proj, heals_cube, damage_cube, \
+           spavnrate_cube
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
     back_to_menu_button = Button(50, 50)
     camera = Camera()
     proj = []
+    oldpoint = point
+    can_atak = 0
+    spavnrate_cub = 200
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     proj_group = pygame.sprite.Group()
@@ -372,20 +388,37 @@ def play():
     max_health = player.heals * 0.1 + 10
     hp = player.heals * 0.1
     #кнопки для item bar
-    item_1, item_2, item_3, item_4, item_5 = Button(50, 50)
     while running:
         global spavnpoint
+        if point > oldpoint:
+            heals_cube += mnoj_hp_cube
+            damage_cube += mnoj_dmg_cube
+            spavnrate_cube -= mnoj_spavnrate_cube
+            player.gold += 10
+            print(player.gold)
+            if spavnrate_cube < 1:
+                spavnrate_cube = 1
+            if spavnrate_cube % 1 != 0:
+                spavnrate_cub = spavnrate_cube // 1
+            oldpoint = point
         spavnpoint += 1
-        if spavnpoint % 300 == 0:
+        if spavnpoint % spavnrate_cub == 0:
             enemis.append(Cube(0))
+            if point % 10 == 0:
+                enemis.append(Cube(0))
+        can_atak += 1
+        if can_atak % player.atakspeed == 0:
+            player.atak = 1
         for i in enemis:
             i.mislitelniy_process()
             if i.live == False:
                 enemis.remove(i)
         for j in proj:
             j.go()
-            if j.live == False:
+            if j.heals == 0:
                 proj.remove(j)
+            if j.live == False:
+                j.heals = 0
         for event in pygame.event.get():
             back_to_menu_button.draw(450, 0, "menu", "menu")
             if event.type == pygame.QUIT:
@@ -414,10 +447,13 @@ def play():
                     godown = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    pos = pygame.mouse.get_pos()
-                    bullet = Bullet(235, 410, pos[0], pos[1])
-                    proj.append(bullet)
-                    bullet.sound()
+                    if player.atak == 1:
+                        pos = pygame.mouse.get_pos()
+                        bullet = Bullet(235, 410, pos[0], pos[1])
+                        proj.append(bullet)
+                        bullet.sound()
+                        player.atak = 0
+                        can_atak = 0
         if godown:
             player.rect.y += 2
         if goup:
