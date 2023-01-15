@@ -70,43 +70,6 @@ def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
     screen.blit(message, (x, y))
 
 
-# меню окончания игры
-def end_game():
-    global point
-    global music_volume
-    pygame.mixer.music.load("data/menu.mp3")
-    pygame.mixer.music.set_volume(music_volume)
-    pygame.mixer.music.play(-1)
-    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
-    show = True
-    start_game_button = Button(150, 70)
-    quit_game_button = Button(100, 70)
-    if georgis:
-        text = "You Win!"
-        color = (0, 255, 0)
-    else:
-        text = "You Lose"
-        color = (255, 0, 0)
-    while show:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    show_menu()
-                if event.key == pygame.K_RETURN:
-                    play()
-        screen.blit(image_background, (0, 0))
-        print_text(text, 130, 180, color, 70)
-        print_text(f"Your score {point}", 100, 383, (76, 81, 74), 70)
-        start_game_button.draw(0, 775, "Restart", "play")
-        global enemis, proj
-        enemis = []
-        proj = []
-        quit_game_button.draw(400, 775, "Quit", "exit")
-        pygame.display.flip()
-
-
 # настройки игры(звук)
 def settings():
     global music_volume
@@ -222,6 +185,42 @@ class Player(pygame.sprite.Sprite):
         self.image = player_images[frame]
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(tile_w * pos_x + 15, tile_h * pos_y + 5)
+
+
+# меню окончания игры
+def end_game():
+    global point
+    global music_volume
+    pygame.mixer.music.load("data/menu.mp3")
+    pygame.mixer.music.set_volume(music_volume)
+    pygame.mixer.music.play(-1)
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
+    show = True
+    start_game_button = Button(150, 70)
+    quit_game_button = Button(100, 70)
+    if georgis:
+        text = "You Win!"
+        color = (0, 255, 0)
+    else:
+        text = "You Lose"
+        color = (255, 0, 0)
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    show_menu()
+                if event.key == pygame.K_RETURN:
+                    play()
+        screen.blit(image_background, (0, 0))
+        print_text(text, 130, 180, color, 70)
+        start_game_button.draw(0, 775, "Restart", "play")
+        global enemis, proj
+        enemis = []
+        proj = []
+        quit_game_button.draw(400, 775, "Quit", "exit")
+        pygame.display.flip()
 
 
 class Cube(pygame.sprite.Sprite):
@@ -385,6 +384,10 @@ def play():
     goup = godown = goleft = goright = False
     icon = load_image("menu_btn.png")
     rect = icon.get_rect()
+    #иконка для денюжки
+    gold_icon = load_image("gold.png")
+    gold_icon = pygame.transform.scale(gold_icon, (25, 25))
+    gold_rect = gold_icon.get_rect()
     max_health = player.heals * 0.1 + 10
     hp = player.heals * 0.1
     #кнопки для item bar
@@ -477,6 +480,10 @@ def play():
         #иконка выходы в меню(паузы)
         move_icon = rect.move(450, 0)
         screen.blit(icon, move_icon)
+        #денюжки
+        move_gold_icon = gold_rect.move(0, 50)
+        print_text(f"{player.gold}", 25, 50, (255, 255, 255), 20)
+        screen.blit(gold_icon, move_gold_icon)
         pygame.display.flip()
         clock.tick(FPS)
 
