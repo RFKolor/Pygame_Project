@@ -296,6 +296,14 @@ class Georgis(pygame.sprite.Sprite):
     def mislitelniy_process(self):
         global point
         if self.heals > 0:
+            if self.rect.x < 0:
+                self.rect.x = 0
+            if self.rect.x > 500:
+                self.rect.x = 500
+            if self.rect.y < 0:
+                self.rect.y = 0
+            if self.rect.y > 840:
+                self.rect.y = 840
             rastoyanie_x = self.rect.x - player.rect.x
             rastoyanie_y = self.rect.y - player.rect.y
             if rastoyanie_y != 0 and rastoyanie_x != 0:
@@ -886,7 +894,7 @@ def play():
         if gt == True:
             if egg_rate % 100 == 0:
                 georgis.bomb_atak()
-            dash = random.randint(0, 500)
+            dash = random.randint(0, 300)
             if dash == 1:
                 georgis.charge()
             for i in eggs:
