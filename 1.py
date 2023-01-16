@@ -17,7 +17,6 @@ screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 # пока босс жив переменна true, когда босс повержен переменная меняется на false,используется для
 # экрана окончания
-georgis = False
 spavnpoint = 0
 enemis = []
 enemis_speed = 1
@@ -26,6 +25,7 @@ music_volume = 0.5
 # костыль чтобы слайдер корректно работал
 slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81, 74),
                 handleColour=(255, 255, 255))
+show_boss_hp_bar = False
 #количество очков заработанных за 1 забаег
 point = 0
 cube_point = 1
@@ -87,52 +87,6 @@ def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
     font_type = pygame.font.SysFont('arial', font_size)
     message = font_type.render(text, True, font_color)
     screen.blit(message, (x, y))
-
-
-# меню окончания игры
-def end_game():
-    global point
-    global music_volume
-    global  eggs, enemis, proj, georg, cube_point, dragon_point, zombie_point, heals_zombie, \
-    heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
-    spavnrate_dragon, spavnrate_cube, boss, gt
-    pygame.mixer.music.load("data/menu.mp3")
-    pygame.mixer.music.set_volume(music_volume)
-    pygame.mixer.music.play(-1)
-    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
-    show = True
-    start_game_button = Button(150, 70)
-    quit_game_button = Button(100, 70)
-    if georgis:
-        text = "You Win!"
-        color = (0, 255, 0)
-    else:
-        text = "You Lose"
-        color = (255, 0, 0)
-    while show:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    show_menu()
-                if event.key == pygame.K_RETURN:
-                    play()
-        screen.blit(image_background, (0, 0))
-        print_text(text, 130, 180, color, 70)
-        print_text(f"Your score {point}", 100, 383, (76, 81, 74), 70)
-        start_game_button.draw(0, 775, "Restart", "play")
-        global enemis, proj
-        enemis = []
-        proj = []
-        eggs = []
-        georg = []
-        boss = gt = False
-        cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
-        damage_cube = damage_zombie = damage_dragon = spavnrate_zombie = spavnrate_dragon = \
-        spavnrate_cube = 0
-        quit_game_button.draw(400, 775, "Quit", "exit")
-        pygame.display.flip()
 
 
 # настройки игры(звук)
@@ -278,6 +232,52 @@ class Player(pygame.sprite.Sprite):
         self.image = player_images[frame]
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(self.x, self.y)
+
+
+# меню окончания игры
+def end_game():
+    global point
+    global music_volume
+    global  eggs, enemis, proj, georg, cube_point, dragon_point, zombie_point, heals_zombie, \
+    heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
+    spavnrate_dragon, spavnrate_cube, boss, gt
+    pygame.mixer.music.load("data/menu.mp3")
+    pygame.mixer.music.set_volume(music_volume)
+    pygame.mixer.music.play(-1)
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
+    show = True
+    start_game_button = Button(150, 70)
+    quit_game_button = Button(100, 70)
+    if not boss:
+        text = "You Win!"
+        color = (0, 255, 0)
+    else:
+        text = "You Lose"
+        color = (255, 0, 0)
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    show_menu()
+                if event.key == pygame.K_RETURN:
+                    play()
+        screen.blit(image_background, (0, 0))
+        print_text(text, 130, 180, color, 70)
+        print_text(f"Your score {player.gold}", 100, 383, (76, 81, 74), 70)
+        start_game_button.draw(0, 775, "Restart", "play")
+        global enemis, proj
+        enemis = []
+        proj = []
+        eggs = []
+        georg = []
+        boss = gt = False
+        cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
+        damage_cube = damage_zombie = damage_dragon = spavnrate_zombie = spavnrate_dragon = \
+        spavnrate_cube = 0
+        quit_game_button.draw(400, 775, "Quit", "exit")
+        pygame.display.flip()
 
 
 class Georgis(pygame.sprite.Sprite):
@@ -729,7 +729,6 @@ class Bullet(pygame.sprite.Sprite):
             self.live = False
 
 
-
 def generate(level):
     new_player, x, y = None, None, None
     for y in range(len(level)):
@@ -770,7 +769,7 @@ def play():
            level_x, level_y, player_image, proj_group, proj, heals_cube, damage_cube, \
            spavnrate_cube, animator, eggs, georg, cube_point, zombie_point, dragon_point, \
            heals_zombie, damage_zombie, spavnrate_zombie, heals_dragon, damage_dragon, \
-           spavnrate_dragon, boss
+           spavnrate_dragon, boss, georgis, show_boss_hp_bar
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -804,6 +803,10 @@ def play():
     rect = icon.get_rect()
     max_health = player.heals * 0.1 + 10
     hp = player.heals * 0.1
+    #иконка для денюжки
+    gold_icon = load_image("gold.png")
+    gold_icon = pygame.transform.scale(gold_icon, (25, 25))
+    gold_rect = gold_icon.get_rect()
     #кнопки для item bar
     while running:
         global spavnpoint
@@ -860,8 +863,9 @@ def play():
                         for i in range(5):
                             enemis.append(Dragon())
         if boss:
+            show_boss_hp_bar = True
             if georg[0].live == False:
-                #<<<<<<<<<<<<< КИРИЛЛ, СЮДА ПИХАЙ ФУНКЦИЮ ПОБЕДНОГО ЭКРАНА ОКОНЧАНИЯ!!!!!!!!!!!!!!!!
+                end_game()
                 boss = False
                 gt = False
                 ng_plus()
@@ -1001,6 +1005,15 @@ def play():
         #иконка выходы в меню(паузы)
         move_icon = rect.move(450, 0)
         screen.blit(icon, move_icon)
+        #денюжки
+        move_gold_icon = gold_rect.move(0, 50)
+        print_text(f"{player.gold}", 25, 50, (255, 255, 255), 20)
+        screen.blit(gold_icon, move_gold_icon)
+        #hp bar boss
+        if boss:
+            pygame.draw.rect(screen, (255, 0, 0), (150, 100, georgis.heals * 0.02, 30))
+            pygame.draw.rect(screen, (0, 0, 0), (150, 95, 10000 * 0.02, 40), 5)
+            print_text(f"{round(georgis.heals * 0.1)}", 170, 100, (0, 0, 0), 30)
         pygame.display.flip()
         clock.tick(FPS)
 
