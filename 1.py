@@ -7,7 +7,7 @@ from pygame_widgets.slider import Slider
 from pygame_widgets.textbox import TextBox
 
 name = 'level1.txt'
-char_name = 'midas'
+char_name = 'thorn'
 
 pygame.init()
 size = w, h = 500, 840
@@ -31,6 +31,8 @@ point = 0
 cube_point = 1
 zombie_point = 1
 dragon_point = 1
+apparat_point = 1
+spike_point = 1
 animator = 0
 mnoj_hp_cube = 0.1
 mnoj_dmg_cube = 0.1
@@ -50,6 +52,18 @@ mnoj_spavnrate_dragon = 2
 heals_dragon = 100
 damage_dragon = 25
 spavnrate_dragon = 500
+mnoj_hp_apparat = 7
+mnoj_dmg_apparat = 5
+mnoj_spavnrate_apparat = 0.5
+heals_apparat = 1000
+damage_apparat = 100
+spavnrate_apparat = 550
+mnoj_hp_spike = 5
+mnoj_dmg_spike = 1
+mnoj_spavnrate_spike = 3
+heals_spike = 500
+damage_spike = 50
+spavnrate_spike = 150
 boss = False
 eggs = []
 georg = []
@@ -182,6 +196,9 @@ zombie_images = [load_image('enemis/zombie.png'), load_image('enemis/zombie1-3.p
 dragon_images = [load_image('enemis/dragon.png'), load_image('enemis/dragon2.png'),
                  load_image('enemis/dragon3.png'), load_image('enemis/dragon4.png'),
                  load_image('enemis/dragon5.png'), load_image('enemis/dragon6.png')]
+apparat_images = [load_image('enemis/apparat.png'), load_image('enemis/apparat1.png')]
+spike_images = [load_image('enemis/spike.png'), load_image('enemis/spike1-3.png'),
+                load_image('enemis/spike2.png'), load_image('enemis/spike1-3.png')]
 georg_images = [load_image('enemis/Georgis.png'), load_image('enemis/Georgis1.png'),
                 load_image('enemis/Georgis2.png'), load_image('enemis/Georgis3.png'),
                 load_image('enemis/Georgis4.png'), load_image('enemis/Georgis5.png'),
@@ -189,6 +206,9 @@ georg_images = [load_image('enemis/Georgis.png'), load_image('enemis/Georgis1.pn
 if char_name == 'midas':
     player_images = [load_image('chars/midas.png'), load_image('chars/midas1-3.png'),
                      load_image('chars/midas2.png'), load_image('chars/midas1-3.png')]
+if char_name == 'thorn':
+    player_images = [load_image('chars/thorn.png'), load_image('chars/thorn1-3.png'),
+                     load_image('chars/thorn2.png'), load_image('chars/thorn1-3.png')]
 tile_w = tile_h = 50
 
 
@@ -218,10 +238,15 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
         self.heals = 1000
-        self.atakspeed = 25
         self.atak = 1
         self.speed = 2
         self.gold = 0
+        if char_name in ['midas', 'shaman']:
+            self.type = '0'
+            self.atakspeed = 25
+        else:
+            self.type = '1'
+            self.atakspeed = 50
         self.image = player_images[0]
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(tile_w * pos_x + 15, tile_h * pos_y + 5)
@@ -510,6 +535,8 @@ class Cube(pygame.sprite.Sprite):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
+            if char_name == 'thorn':
+                self.heals -= self.damage * 20 / 100
             if player.heals <= 0:
                 player.kill()
                 end_game()
@@ -583,6 +610,8 @@ class Zombie(pygame.sprite.Sprite):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
+            if char_name == 'thorn':
+                self.heals -= self.damage * 20 / 100
             if player.heals <= 0:
                 player.kill()
                 end_game()
@@ -663,6 +692,8 @@ class Dragon(pygame.sprite.Sprite):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
+            if char_name == 'thorn':
+                self.heals -= self.damage * 20 / 100
             if player.heals <= 0:
                 player.kill()
                 end_game()
@@ -680,6 +711,170 @@ class Dragon(pygame.sprite.Sprite):
             self.rect = self.rect.move(self.x, self.y)
         else:
             self.image = dragon_images[self.frame]
+            self.frame += 1
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(self.x, self.y)
+
+
+class Apparat(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(enemi_group, all_sprites)
+        self.live = True
+        self.frame = 0
+        self.gp = [500, 50]
+        self.damage = damage_apparat
+        self.image = apparat_images[0]
+        self.rect = self.image.get_rect()
+        self.heals = heals_apparat
+        if random.choice((0, 1)) == 1:
+            self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
+        else:
+            self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
+
+    def mislitelniy_process(self):
+        global point, apparat_point
+        if self.heals > 0:
+            rastoyanie_x = self.rect.x - player.rect.x
+            rastoyanie_y = self.rect.y - player.rect.y
+            if rastoyanie_y != 0 and rastoyanie_x != 0:
+                if rastoyanie_x > rastoyanie_y:
+                    koef = abs(rastoyanie_x) / abs(rastoyanie_y)
+                    if koef < 1:
+                        koef = 1
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)),
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)) / koef)
+                elif rastoyanie_x < rastoyanie_y:
+                    koef = abs(rastoyanie_y) / abs(rastoyanie_x)
+                    if koef < 1:
+                        koef = 1
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)) / koef,
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)))
+                else:
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)),
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)))
+            elif rastoyanie_x == 0 and rastoyanie_y != 0:
+                self.rect.y += enemis_speed * -(rastoyanie_y / abs(rastoyanie_y))
+            elif rastoyanie_y == 0 and rastoyanie_x != 0:
+                self.rect.x += enemis_speed * -(rastoyanie_x / abs(rastoyanie_x))
+        else:
+            self.kill()
+            self.live = False
+            point += self.gp[1]
+            player.gold += self.gp[0]
+            if char_name == 'midas':
+                player.gold += self.gp[0] * 20 // 100
+            apparat_point += 1
+        if self.rect.collidelistall(proj):
+            self.heals -= damage
+        if self.rect.colliderect(player.rect):
+            player.heals -= self.damage
+            if char_name == 'thorn':
+                self.heals -= self.damage * 20 / 100
+            if player.heals <= 0:
+                player.kill()
+                end_game()
+
+    def animate(self):
+        self.x = self.rect.x
+        self.y = self.rect.y
+        if self.frame == 2:
+            self.frame = 0
+        if self.rect.x - player.rect.x > 0:
+            self.image = apparat_images[self.frame]
+            self.frame += 1
+            self.image = pygame.transform.flip(self.image, True, False)
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(self.x, self.y)
+        else:
+            self.image = apparat_images[self.frame]
+            self.frame += 1
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(self.x, self.y)
+
+
+class Spike(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(enemi_group, all_sprites)
+        self.live = True
+        self.frame = 0
+        self.gp = [250, 65]
+        self.damage = damage_spike
+        self.image = spike_images[0]
+        self.rect = self.image.get_rect()
+        self.heals = heals_spike
+        if random.choice((0, 1)) == 1:
+            self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
+        else:
+            self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
+
+    def mislitelniy_process(self):
+        global point, spike_point
+        if self.heals > 0:
+            rastoyanie_x = self.rect.x - player.rect.x
+            rastoyanie_y = self.rect.y - player.rect.y
+            if rastoyanie_y != 0 and rastoyanie_x != 0:
+                if rastoyanie_x > rastoyanie_y:
+                    koef = abs(rastoyanie_x) / abs(rastoyanie_y)
+                    if koef < 1:
+                        koef = 1
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)),
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)) / koef)
+                elif rastoyanie_x < rastoyanie_y:
+                    koef = abs(rastoyanie_y) / abs(rastoyanie_x)
+                    if koef < 1:
+                        koef = 1
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)) / koef,
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)))
+                else:
+                    self.rect = self.rect.move(enemis_speed *
+                                               -(rastoyanie_x / abs(rastoyanie_x)),
+                                               enemis_speed *
+                                               -(rastoyanie_y / abs(rastoyanie_y)))
+            elif rastoyanie_x == 0 and rastoyanie_y != 0:
+                self.rect.y += enemis_speed * -(rastoyanie_y / abs(rastoyanie_y))
+            elif rastoyanie_y == 0 and rastoyanie_x != 0:
+                self.rect.x += enemis_speed * -(rastoyanie_x / abs(rastoyanie_x))
+        else:
+            self.kill()
+            self.live = False
+            point += self.gp[1]
+            player.gold += self.gp[0]
+            if char_name == 'midas':
+                player.gold += self.gp[0] * 20 // 100
+            spike_point += 1
+        if self.rect.collidelistall(proj):
+            self.heals -= damage
+        if self.rect.colliderect(player.rect):
+            player.heals -= self.damage
+            if char_name == 'thorn':
+                self.heals -= self.damage * 20 / 100
+            if player.heals <= 0:
+                player.kill()
+                end_game()
+
+    def animate(self):
+        self.x = self.rect.x
+        self.y = self.rect.y
+        if self.frame == 4:
+            self.frame = 0
+        if self.rect.x - player.rect.x > 0:
+            self.image = spike_images[self.frame]
+            self.frame += 1
+            self.image = pygame.transform.flip(self.image, True, False)
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(self.x, self.y)
+        else:
+            self.image = spike_images[self.frame]
             self.frame += 1
             self.rect = self.image.get_rect()
             self.rect = self.rect.move(self.x, self.y)
@@ -728,6 +923,35 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
             self.live = False
 
+    def death(self):
+        pass
+
+
+class Slash(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(proj_group)
+        self.live = True
+        self.heals = 5
+        self.image = load_image('slash.png')
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(x, y)
+        self.slash_attack_sound = pygame.mixer.Sound("data/slash_attack.wav")
+
+
+    def sound(self):
+        pygame.mixer.Sound.play(self.slash_attack_sound)
+
+    def go(self):
+        if self.heals > 0:
+            self.x = self.rect.x
+            self.y = self.rect.y
+            self.image = pygame.transform.rotate(self.image, 90)
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(self.x, self.y)
+            self.live = False
+
+    def death(self):
+            self.kill()
 
 def generate(level):
     new_player, x, y = None, None, None
@@ -769,7 +993,9 @@ def play():
            level_x, level_y, player_image, proj_group, proj, heals_cube, damage_cube, \
            spavnrate_cube, animator, eggs, georg, cube_point, zombie_point, dragon_point, \
            heals_zombie, damage_zombie, spavnrate_zombie, heals_dragon, damage_dragon, \
-           spavnrate_dragon, boss, georgis, show_boss_hp_bar
+           spavnrate_dragon, boss, georgis, show_boss_hp_bar, apparat_point, heals_apparat, \
+           damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
+           spavnrate_spike
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -779,11 +1005,15 @@ def play():
     oldpoint_cube = cube_point
     oldpoint_zombie = zombie_point
     oldpoint_dragon = dragon_point
+    oldpoint_apparat = apparat_point
+    oldpoint_spike = spike_point
     can_atak = 0
     frame_tick = 0
     spavnrate_cub = 200
     spavnrate_zomb = 150
     spavnrate_drag = 500
+    spavnrate_app = 550
+    spavnrate_spik = 150
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     proj_group = pygame.sprite.Group()
@@ -794,6 +1024,8 @@ def play():
     egg_rate = 0
     zombie_timer = 0
     dragon_timer = 0
+    apparat_timer = 0
+    spike_timer = 0
     timer = 0
     gt = False
     player, level_x, level_y = generate(load_level(name))
@@ -842,6 +1074,24 @@ def play():
             if spavnrate_dragon % 1 != 0:
                 spavnrate_drag = spavnrate_dragon // 1
             oldpoint_dragon = dragon_point
+        if apparat_point > oldpoint_apparat:
+            heals_apparat += mnoj_hp_apparat
+            damage_apparat += mnoj_dmg_apparat
+            spavnrate_apparat -= mnoj_spavnrate_apparat
+            if spavnrate_apparat < 1:
+                spavnrate_apparat = 1
+            if spavnrate_apparat % 1 != 0:
+                spavnrate_app = spavnrate_apparat // 1
+            oldpoint_apparat = apparat_point
+        if spike_point > oldpoint_spike:
+            heals_spike += mnoj_hp_spike
+            damage_spike += mnoj_dmg_spike
+            spavnrate_spike -= mnoj_spavnrate_spike
+            if spavnrate_spike < 1:
+                spavnrate_spike = 1
+            if spavnrate_spike % 1 != 0:
+                spavnrate_spik = spavnrate_spike // 1
+            oldpoint_spike = spike_point
         spavnpoint += 1
         if not boss:
             if spavnpoint % spavnrate_cub == 0:
@@ -850,17 +1100,28 @@ def play():
                     enemis.append(Cube())
             zombie_timer += 1
             dragon_timer += 1
-            if zombie_timer > 18000:
+            apparat_timer += 1
+            spike_timer += 1
+            if zombie_timer > 10800:
                 if spavnpoint % spavnrate_zombie == 0:
                     enemis.append(Zombie())
                     if zombie_point % 5 == 0:
                         enemis.append(Zombie())
                         enemis.append(Zombie())
-            if zombie_timer > 36000:
+            if zombie_timer > 21600:
                 if spavnpoint % spavnrate_dragon == 0:
                     enemis.append(Dragon())
                     if dragon_point % 10 == 0:
                         for i in range(5):
+                            enemis.append(Dragon())
+            if apparat_timer > 32400:
+                if spavnpoint % spavnrate_apparat == 0:
+                    enemis.append(Apparat())
+            if spike_timer > 43200:
+                if spavnpoint % spavnrate_spike == 0:
+                    enemis.append(Spike())
+                    if spike_point % 7 == 0:
+                        for i in range(3):
                             enemis.append(Dragon())
         if boss:
             show_boss_hp_bar = True
@@ -881,7 +1142,8 @@ def play():
                 enemis.remove(i)
         for j in proj:
             j.go()
-            if j.heals == 0:
+            if j.heals <= 0:
+                j.death()
                 proj.remove(j)
             if j.live == False:
                 j.heals -= 1
@@ -971,12 +1233,19 @@ def play():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     if player.atak == 1:
-                        pos = pygame.mouse.get_pos()
-                        bullet = Bullet(235, 410, pos[0], pos[1])
-                        proj.append(bullet)
-                        bullet.sound()
-                        player.atak = 0
-                        can_atak = 0
+                        if player.type == '0':
+                            pos = pygame.mouse.get_pos()
+                            bullet = Bullet(235, 410, pos[0], pos[1])
+                            proj.append(bullet)
+                            bullet.sound()
+                            player.atak = 0
+                            can_atak = 0
+                        else:
+                            slash = Slash(190, 360)
+                            proj.append(slash)
+                            slash.sound()
+                            player.atak = 0
+                            can_atak = 0
         if godown:
             player.rect.y += player.speed
         if goup:
