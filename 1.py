@@ -75,6 +75,7 @@ class Button:
         self.button_click = pygame.mixer.Sound("data/button.wav")
 
     def draw(self, x, y, text, function=None):
+        global char_name
         # function передает вызов функции или саму функцию,допустим начало игры или выход
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = pygame.mouse.get_pressed()
@@ -94,6 +95,21 @@ class Button:
                             show_menu()
                         elif function == "settings":
                             settings()
+                        elif function == "choose_hero":
+                            choose_hero()
+                        # для выборы героев
+                        elif function == "midas":
+                            char_name = "midas"
+                            print(char_name)
+                        elif function == "shaman":
+                            char_name = "shaman"
+                        elif function == "gostshell":
+                            char_name = "gostshell"
+                        elif function == "bloodthief":
+                            char_name = "bloodthief"
+                        elif function == "thorn":
+                            char_name = "thorn"
+                            print(char_name)
 
 
 # функция для печатания текста
@@ -140,6 +156,7 @@ def show_menu():
     start_game_button = Button(230, 70)
     quit_game_button = Button(100, 70)
     setting_game_button = Button(150, 70)
+    choose_hero_button = Button(250, 70)
     while show:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -151,8 +168,56 @@ def show_menu():
         print_text("Reverenge Georgis", 0, 0, (90, 0, 0), 70)
         print_text("Exclusive edition", 100, 90, (166, 189, 215), 50)
         start_game_button.draw(135, 255, "Start Game", "play")
-        setting_game_button.draw(175, 425, "Setting", "settings")
-        quit_game_button.draw(200, 595, "Quit", "exit")
+        setting_game_button.draw(175, 595, "Setting", "settings")
+        quit_game_button.draw(200, 765, "Quit", "exit")
+        choose_hero_button.draw(125, 425, "Choose hero", "choose_hero")
+        pygame.display.flip()
+
+
+#меню выбора персонажей
+def choose_hero():
+    global player_images, char_name
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
+    show = True
+    midas_btn = Button(130, 70)
+    thorn_btn = Button(130, 70)
+    shaman_btn = Button(170, 70)
+    gostshell_btn = Button(190, 70)
+    bloodthief_btn = Button(200, 70)
+    menu_btn = Button(120, 70)
+    while show:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                terminate()
+        screen.blit(image_background, (0, 0))
+        print_text("Hero", 0, 50, (90, 0, 0), 50)
+        print_text("Description", 140, 50, (90, 0, 0), 50)
+        print_text("Choose Hero", 140, 0, (166, 189, 215), 50)
+        #герой
+        midas_btn.draw(0, 100, "Midas", "midas")
+        #описание героя
+        print_text("makes money", 140, 110, (255, 255, 255), 30)
+        thorn_btn.draw(0, 200, "Thorn", "thorn")
+        print_text("Returns damage to the offender", 140, 210, (255, 255, 255), 30)
+        shaman_btn.draw(0, 300, "Shaman", "shaman")
+        print_text("enemies are rotting from", 180, 300, (255, 255, 255), 30)
+        print_text("his magical aura", 180, 330, (255, 255, 255), 30)
+        gostshell_btn.draw(0, 400, "Gostshell", "gostshell")
+        print_text("turns the lives of enemies", 200, 400, (255, 255, 255), 30)
+        print_text("into his own defense", 200, 430, (255, 255, 255), 30)
+        bloodthief_btn.draw(0, 500, "Bloodthief", "bloodthief")
+        print_text("There are many of us, but", 210, 500, (255, 255, 255), 30)
+        print_text("he is alone!", 210, 530, (255, 255, 255), 30)
+        menu_btn.draw(180, 720, "Menu", "menu")
+        #вот здесь все пиши для выбора персонажей
+        if char_name == 'midas':
+            player_images = [load_image('chars/midas.png'), load_image('chars/midas1-3.png'),
+                             load_image('chars/midas2.png'), load_image('chars/midas1-3.png')]
+        if char_name == 'thorn':
+            player_images = [load_image('chars/thorn.png'), load_image('chars/thorn1-3.png'),
+                             load_image('chars/thorn2.png'), load_image('chars/thorn1-3.png')]
+        print(char_name)
         pygame.display.flip()
 
 
@@ -273,7 +338,7 @@ def end_game():
     show = True
     start_game_button = Button(150, 70)
     quit_game_button = Button(100, 70)
-    if not boss:
+    if boss:
         text = "You Win!"
         color = (0, 255, 0)
     else:
