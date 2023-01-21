@@ -217,7 +217,19 @@ def choose_hero():
         if char_name == 'thorn':
             player_images = [load_image('chars/thorn.png'), load_image('chars/thorn1-3.png'),
                              load_image('chars/thorn2.png'), load_image('chars/thorn1-3.png')]
-        print(char_name)
+        if char_name == 'shaman':
+            player_images = [load_image('chars/shaman.png'), load_image('chars/shaman1-3.png'),
+                             load_image('chars/shaman2.png'), load_image('chars/shaman1-3.png')]
+        if char_name == 'gostshell':
+            player_images = [load_image('chars/gostshell.png'),
+                             load_image('chars/gostshell1-3.png'),
+                             load_image('chars/gostshell2.png'),
+                             load_image('chars/gostshell1-3.png')]
+        if char_name == 'bloodthief':
+            player_images = [load_image('chars/bloodthief.png'),
+                             load_image('chars/bloodthief1-3.png'),
+                             load_image('chars/bloodthief2.png'),
+                             load_image('chars/bloodthief1-3.png')]
         pygame.display.flip()
 
 
@@ -268,12 +280,8 @@ georg_images = [load_image('enemis/Georgis.png'), load_image('enemis/Georgis1.pn
                 load_image('enemis/Georgis2.png'), load_image('enemis/Georgis3.png'),
                 load_image('enemis/Georgis4.png'), load_image('enemis/Georgis5.png'),
                 load_image('enemis/Georgis6.png'), load_image('enemis/Georgis7.png')]
-if char_name == 'midas':
-    player_images = [load_image('chars/midas.png'), load_image('chars/midas1-3.png'),
-                     load_image('chars/midas2.png'), load_image('chars/midas1-3.png')]
-if char_name == 'thorn':
-    player_images = [load_image('chars/thorn.png'), load_image('chars/thorn1-3.png'),
-                     load_image('chars/thorn2.png'), load_image('chars/thorn1-3.png')]
+player_images = [load_image('chars/thorn.png'), load_image('chars/thorn1-3.png'),
+                 load_image('chars/thorn2.png'), load_image('chars/thorn1-3.png')]
 tile_w = tile_h = 50
 
 
@@ -375,6 +383,7 @@ class Georgis(pygame.sprite.Sprite):
         super().__init__(enemi_group, all_sprites)
         global eggs
         self.heals = 10000
+        self.maxheals = self.heals
         self.live = True
         self.frame = 0
         self.damage = 100
@@ -426,6 +435,8 @@ class Georgis(pygame.sprite.Sprite):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
+            if char_name == 'thorn':
+                self.heals -= self.damage * 20 / 100
             if player.heals <= 0:
                 player.kill()
                 end_game()
@@ -547,11 +558,13 @@ class Cube(pygame.sprite.Sprite):
         super().__init__(enemi_group, all_sprites)
         self.live = True
         self.frame = 0
+        self.mark = False
         self.gp = [10, 1]
         self.damage = damage_cube
         self.image = cube_images[0]
         self.rect = self.image.get_rect()
         self.heals = heals_cube
+        self.maxheals = self.heals
         if random.choice((0, 1)) == 1:
             self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
         else:
@@ -597,7 +610,10 @@ class Cube(pygame.sprite.Sprite):
                 player.gold += self.gp[0] * 20 // 100
             cube_point += 1
         if self.rect.collidelistall(proj):
-            self.heals -= damage
+            if not self.mark:
+                self.heals -= damage
+            else:
+                self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
@@ -626,7 +642,9 @@ class Zombie(pygame.sprite.Sprite):
         self.damage = damage_zombie
         self.image = zombie_images[0]
         self.rect = self.image.get_rect()
+        self.mark = False
         self.heals = heals_zombie
+        self.maxheals = self.heals
         if random.choice((0, 1)) == 1:
             self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
         else:
@@ -672,7 +690,10 @@ class Zombie(pygame.sprite.Sprite):
                 player.gold += self.gp[0] * 20 // 100
             zombie_point += 1
         if self.rect.collidelistall(proj):
-            self.heals -= damage
+            if not self.mark:
+                self.heals -= damage
+            else:
+                self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
@@ -706,9 +727,11 @@ class Dragon(pygame.sprite.Sprite):
         self.frame = 0
         self.gp = [100, 25]
         self.damage = damage_dragon
+        self.mark = False
         self.image = dragon_images[0]
         self.rect = self.image.get_rect()
         self.heals = heals_dragon
+        self.maxheals = self.heals
         if random.choice((0, 1)) == 1:
             self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
         else:
@@ -754,7 +777,10 @@ class Dragon(pygame.sprite.Sprite):
                 player.gold += self.gp[0] * 20 // 100
             dragon_point += 1
         if self.rect.collidelistall(proj):
-            self.heals -= damage
+            if not self.mark:
+                self.heals -= damage
+            else:
+                self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
@@ -787,10 +813,12 @@ class Apparat(pygame.sprite.Sprite):
         self.live = True
         self.frame = 0
         self.gp = [500, 50]
+        self.mark = False
         self.damage = damage_apparat
         self.image = apparat_images[0]
         self.rect = self.image.get_rect()
         self.heals = heals_apparat
+        self.maxheals = self.heals
         if random.choice((0, 1)) == 1:
             self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
         else:
@@ -836,7 +864,10 @@ class Apparat(pygame.sprite.Sprite):
                 player.gold += self.gp[0] * 20 // 100
             apparat_point += 1
         if self.rect.collidelistall(proj):
-            self.heals -= damage
+            if not self.mark:
+                self.heals -= damage
+            else:
+                self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
@@ -869,10 +900,12 @@ class Spike(pygame.sprite.Sprite):
         self.live = True
         self.frame = 0
         self.gp = [250, 65]
+        self.mark = False
         self.damage = damage_spike
         self.image = spike_images[0]
         self.rect = self.image.get_rect()
         self.heals = heals_spike
+        self.maxheals = self.heals
         if random.choice((0, 1)) == 1:
             self.rect = self.rect.move(random.choice((-25, 500)), random.randint(-25, 851))
         else:
@@ -918,7 +951,10 @@ class Spike(pygame.sprite.Sprite):
                 player.gold += self.gp[0] * 20 // 100
             spike_point += 1
         if self.rect.collidelistall(proj):
-            self.heals -= damage
+            if not self.mark:
+                self.heals -= damage
+            else:
+                self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
@@ -1018,6 +1054,54 @@ class Slash(pygame.sprite.Sprite):
     def death(self):
             self.kill()
 
+
+class Aura(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(proj_group)
+        self.image = load_image('aura.png')
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(player.rect.x - 90, player.rect.y + 90)
+
+    def go(self, x, y):
+        if player.heals <= 0:
+            self.kill()
+        for i in enemis:
+            if i.rect.colliderect(aura.rect):
+                i.heals -= i.maxheals / 1000
+
+
+class Shield(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(proj_group)
+        self.heals = 200
+        self.level = 1
+        self.live = True
+        self.image = load_image('shield.png')
+        self.sound = pygame.mixer.Sound("data/shield_sound.wav")
+        pygame.mixer.Sound.play(self.sound)
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(player.rect.x - 20, player.rect.y - 10)
+
+    def mehanika(self):
+        if self.heals > 0:
+            for i in enemis:
+                if i.rect.colliderect(player.rect):
+                    player.heals += i.damage
+                    self.heals -= i.damage
+        else:
+            for i in enemis:
+                if i.rect.colliderect(self.rect):
+                    i.heals -= 10 * self.level
+                self.level = 0
+                self.kill()
+                self.krak = pygame.mixer.Sound("data/krak.wav")
+                pygame.mixer.Sound.play(self.krak)
+
+    def levelup(self):
+        self.level += 1
+        self.heals = 200 * self.level
+
+
 def generate(level):
     new_player, x, y = None, None, None
     for y in range(len(level)):
@@ -1060,7 +1144,7 @@ def play():
            heals_zombie, damage_zombie, spavnrate_zombie, heals_dragon, damage_dragon, \
            spavnrate_dragon, boss, georgis, show_boss_hp_bar, apparat_point, heals_apparat, \
            damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
-           spavnrate_spike
+           spavnrate_spike, aura, damage, kills, old_kills
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -1072,6 +1156,8 @@ def play():
     oldpoint_dragon = dragon_point
     oldpoint_apparat = apparat_point
     oldpoint_spike = spike_point
+    kills = 0
+    old_kills = kills
     can_atak = 0
     frame_tick = 0
     spavnrate_cub = 200
@@ -1086,6 +1172,7 @@ def play():
     enemi_group = pygame.sprite.Group()
     box_g = pygame.sprite.Group()
     player = None
+    aura = None
     egg_rate = 0
     zombie_timer = 0
     dragon_timer = 0
@@ -1095,6 +1182,7 @@ def play():
     gt = False
     player, level_x, level_y = generate(load_level(name))
     running = True
+    shield = None
     goup = godown = goleft = goright = False
     icon = load_image("menu_btn.png")
     rect = icon.get_rect()
@@ -1104,6 +1192,8 @@ def play():
     gold_icon = load_image("gold.png")
     gold_icon = pygame.transform.scale(gold_icon, (25, 25))
     gold_rect = gold_icon.get_rect()
+    if char_name == 'shaman':
+        aura = Aura(player.rect.x, player.rect.y)
     #кнопки для item bar
     while running:
         global spavnpoint
@@ -1116,8 +1206,8 @@ def play():
             heals_cube += mnoj_hp_cube
             damage_cube += mnoj_dmg_cube
             spavnrate_cube -= mnoj_spavnrate_cube
-            if spavnrate_cube < 1:
-                spavnrate_cube = 1
+            if spavnrate_cube < 5:
+                spavnrate_cube = 5
             if spavnrate_cube % 1 != 0:
                 spavnrate_cub = spavnrate_cube // 1
             oldpoint_cube = cube_point
@@ -1125,8 +1215,8 @@ def play():
             heals_zombie += mnoj_hp_zombie
             damage_zombie += mnoj_dmg_zombie
             spavnrate_zombie -= mnoj_spavnrate_zombie
-            if spavnrate_zombie < 1:
-                spavnrate_zombie = 1
+            if spavnrate_zombie < 5:
+                spavnrate_zombie = 5
             if spavnrate_zombie % 1 != 0:
                 spavnrate_zomb = spavnrate_zombie // 1
             oldpoint_zombie = zombie_point
@@ -1134,8 +1224,8 @@ def play():
             heals_dragon += mnoj_hp_dragon
             damage_dragon += mnoj_dmg_dragon
             spavnrate_dragon -= mnoj_spavnrate_dragon
-            if spavnrate_dragon < 1:
-                spavnrate_dragon = 1
+            if spavnrate_dragon < 5:
+                spavnrate_dragon = 5
             if spavnrate_dragon % 1 != 0:
                 spavnrate_drag = spavnrate_dragon // 1
             oldpoint_dragon = dragon_point
@@ -1143,8 +1233,8 @@ def play():
             heals_apparat += mnoj_hp_apparat
             damage_apparat += mnoj_dmg_apparat
             spavnrate_apparat -= mnoj_spavnrate_apparat
-            if spavnrate_apparat < 1:
-                spavnrate_apparat = 1
+            if spavnrate_apparat < 5:
+                spavnrate_apparat = 5
             if spavnrate_apparat % 1 != 0:
                 spavnrate_app = spavnrate_apparat // 1
             oldpoint_apparat = apparat_point
@@ -1152,15 +1242,41 @@ def play():
             heals_spike += mnoj_hp_spike
             damage_spike += mnoj_dmg_spike
             spavnrate_spike -= mnoj_spavnrate_spike
-            if spavnrate_spike < 1:
-                spavnrate_spike = 1
+            if spavnrate_spike < 5:
+                spavnrate_spike = 5
             if spavnrate_spike % 1 != 0:
                 spavnrate_spik = spavnrate_spike // 1
             oldpoint_spike = spike_point
         spavnpoint += 1
+        if char_name == 'gostshell':
+            if shield == None:
+                if kills > 3:
+                    shield = Shield()
+                    old_kills = kills
+            else:
+                if kills > old_kills * shield.level:
+                    shield.levelup()
+                    old_kills = kills
+                shield.mehanika()
+                if shield.heals <= 0:
+                    kills = 0
+                    old_kills = 0
+                    shield.mehanika()
+                    shield = None
+        if char_name == 'shaman':
+            aura.go(player.rect.x, player.rect.y)
         if not boss:
             if spavnpoint % spavnrate_cub == 0:
-                enemis.append(Cube())
+                if char_name == 'bloodthief':
+                    if random.randint(1, 20) == 7:
+                        player.heals *= 2
+                        cube = Cube()
+                        cube.mark = True
+                        enemis.append(cube)
+                    else:
+                        enemis.append(Cube())
+                else:
+                    enemis.append(Cube())
                 if cube_point % 10 == 0:
                     enemis.append(Cube())
             zombie_timer += 1
@@ -1169,25 +1285,61 @@ def play():
             spike_timer += 1
             if zombie_timer > 10800:
                 if spavnpoint % spavnrate_zombie == 0:
-                    enemis.append(Zombie())
+                    if char_name == 'bloodthief':
+                        if random.randint(1, 20) == 7:
+                            player.health *= 2
+                            zombie = Zombie()
+                            zombie.mark = True
+                            enemis.append(zombie)
+                        else:
+                            enemis.append(Zombie())
+                    else:
+                        enemis.append(Zombie())
                     if zombie_point % 5 == 0:
                         enemis.append(Zombie())
                         enemis.append(Zombie())
-            if zombie_timer > 21600:
+            if dragon_timer > 21600:
                 if spavnpoint % spavnrate_dragon == 0:
-                    enemis.append(Dragon())
+                    if char_name == 'bloodthief':
+                        if random.randint(1, 20) == 7:
+                            player.health *= 2
+                            dragon = Dragon()
+                            dragon.mark = True
+                            enemis.append(dragon)
+                        else:
+                            enemis.append(Dragon())
+                    else:
+                        enemis.append(Dragon())
                     if dragon_point % 10 == 0:
                         for i in range(5):
                             enemis.append(Dragon())
             if apparat_timer > 32400:
                 if spavnpoint % spavnrate_apparat == 0:
-                    enemis.append(Apparat())
+                    if char_name == 'bloodthief':
+                        if random.randint(1, 20) == 7:
+                            player.health *= 2
+                            apparat = Apparat()
+                            apparat.mark = True
+                            enemis.append(apparat)
+                        else:
+                            enemis.append(Apparat())
+                    else:
+                        enemis.append(Apparat())
             if spike_timer > 43200:
                 if spavnpoint % spavnrate_spike == 0:
-                    enemis.append(Spike())
+                    if char_name == 'bloodthief':
+                        if random.randint(1, 20) == 7:
+                            player.health *= 2
+                            spike = Spike()
+                            spike.mark = True
+                            enemis.append(spike)
+                        else:
+                            enemis.append(Spike())
+                    else:
+                        enemis.append(Spike())
                     if spike_point % 7 == 0:
                         for i in range(3):
-                            enemis.append(Dragon())
+                            enemis.append(Spike())
         if boss:
             show_boss_hp_bar = True
             if georg[0].live == False:
@@ -1203,8 +1355,15 @@ def play():
             i.mislitelniy_process()
             if frame_tick % 10 == 0:
                 i.animate()
-            if i.live == False:
-                enemis.remove(i)
+            if not i.mark:
+                if i.live == False:
+                    enemis.remove(i)
+                    kills += 1
+            else:
+                if i.live == False:
+                    enemis.remove(i)
+                    kills += 1
+                    player.heals /= 2
         for j in proj:
             j.go()
             if j.heals <= 0:
