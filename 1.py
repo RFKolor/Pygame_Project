@@ -15,8 +15,6 @@ pygame.display.set_caption("Reverenge Georgis")
 FPS = 60
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
-# пока босс жив переменна true, когда босс повержен переменная меняется на false,используется для
-# экрана окончания
 spavnpoint = 0
 enemis = []
 enemis_speed = 1
