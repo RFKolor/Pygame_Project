@@ -399,6 +399,7 @@ class Georgis(pygame.sprite.Sprite):
         self.maxheals = self.heals
         self.live = True
         self.frame = 0
+        self.mark = False
         self.damage = 100
         self.speed = 3
         self.image = georg_images[0]
@@ -1298,7 +1299,7 @@ def play():
             if spavnpoint % spavnrate_cub == 0:
                 if char_name == 'bloodthief':
                     if random.randint(1, 20) == 7:
-                        player.heals *= 2
+                        player.heals *= 1.2
                         cube = Cube()
                         cube.mark = True
                         enemis.append(cube)
@@ -1316,7 +1317,7 @@ def play():
                 if spavnpoint % spavnrate_zombie == 0:
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
-                            player.health *= 2
+                            player.health *= 1.2
                             zombie = Zombie()
                             zombie.mark = True
                             enemis.append(zombie)
@@ -1331,7 +1332,7 @@ def play():
                 if spavnpoint % spavnrate_dragon == 0:
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
-                            player.health *= 2
+                            player.health *= 1.2
                             dragon = Dragon()
                             dragon.mark = True
                             enemis.append(dragon)
@@ -1346,7 +1347,7 @@ def play():
                 if spavnpoint % spavnrate_apparat == 0:
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
-                            player.health *= 2
+                            player.health *= 1.2
                             apparat = Apparat()
                             apparat.mark = True
                             enemis.append(apparat)
@@ -1358,7 +1359,7 @@ def play():
                 if spavnpoint % spavnrate_spike == 0:
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
-                            player.health *= 2
+                            player.health *= 1.2
                             spike = Spike()
                             spike.mark = True
                             enemis.append(spike)
@@ -1392,7 +1393,7 @@ def play():
                 if i.live == False:
                     enemis.remove(i)
                     kills += 1
-                    player.heals /= 2
+                    player.heals /= 1.2
         for j in proj:
             j.go()
             if j.heals <= 0:
@@ -1474,6 +1475,17 @@ def play():
                     goup = True
                 if event.key == pygame.K_DOWN:
                     godown = True
+                if event.key == pygame.K_g:
+                    player.gold = 999999
+                if event.key == pygame.K_9:
+                    if not gt:
+                        roar = pygame.mixer.Sound("data/rev.wav")
+                        pygame.mixer.Sound.play(roar)
+                        georgis = Georgis()
+                        georg.append(georgis)
+                        enemis.append(georgis)
+                        boss = True
+                        gt = True
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
                     goleft = False
