@@ -26,6 +26,11 @@ slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81
 show_boss_hp_bar = False
 #количество очков заработанных за 1 забаег
 point = 0
+#tree talant
+tt_show = False
+hp_level = 1
+speed_level = 1
+damage_level = 1
 cube_point = 1
 zombie_point = 1
 dragon_point = 1
@@ -73,7 +78,7 @@ class Button:
         self.button_click = pygame.mixer.Sound("data/button.wav")
 
     def draw(self, x, y, text, function=None):
-        global char_name
+        global char_name, tt_show, hp_level, speed_level, damage_level
         # function передает вызов функции или саму функцию,допустим начало игры или выход
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = pygame.mouse.get_pressed()
@@ -98,7 +103,6 @@ class Button:
                         # для выборы героев
                         elif function == "midas":
                             char_name = "midas"
-                            print(char_name)
                         elif function == "shaman":
                             char_name = "shaman"
                         elif function == "gostshell":
@@ -107,7 +111,18 @@ class Button:
                             char_name = "bloodthief"
                         elif function == "thorn":
                             char_name = "thorn"
-                            print(char_name)
+                        #tt - tree talant
+                        elif function == "tt":
+                           tt_show = True
+                        elif function == "close_tt":
+                            tt_show = False
+                            print("close")
+                        elif function == "hp_up":
+                            hp_level += 1
+                        elif function == "speed_up":
+                            speed_level += 1
+                        elif function == "damage_up":
+                            damage_level += 1
 
 
 # функция для печатания текста
@@ -361,7 +376,7 @@ def end_game():
                     play()
         screen.blit(image_background, (0, 0))
         print_text(text, 130, 180, color, 70)
-        print_text(f"Your score {player.gold}", 100, 383, (76, 81, 74), 70)
+        print_text(f"Your score {player.gold}", 130, 383, (76, 81, 74), 50)
         start_game_button.draw(0, 775, "Restart", "play")
         global enemis, proj
         enemis = []
@@ -1142,11 +1157,27 @@ def play():
            heals_zombie, damage_zombie, spavnrate_zombie, heals_dragon, damage_dragon, \
            spavnrate_dragon, boss, georgis, show_boss_hp_bar, apparat_point, heals_apparat, \
            damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
-           spavnrate_spike, aura, damage, kills, old_kills
+           spavnrate_spike, aura, damage, kills, old_kills, tt_show
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
-    back_to_menu_button = Button(50, 50)
+    #для прокачки
+    hp_up = Button(50, 50)
+    speed_up = Button(50, 50)
+    damage_up = Button(50, 50)
+    hp_talant = load_image("hp_talant.png")
+    hp_rect = hp_talant.get_rect()
+    speed_talant = load_image("speed_talant.png")
+    speed_rect = speed_talant.get_rect()
+    damage_talant = load_image("damage_talant.png")
+    damage_rect = damage_talant.get_rect()
+    talant_tree = Button(40, 40)
+    close_tt_icon = load_image("close_tt.png")
+    close_rect = close_tt_icon.get_rect()
+    talant_tree_image = load_image("tree_of_talants.png")
+    talant_rect = talant_tree_image.get_rect()
+    close_tt = Button(50, 50)
+    back_to_menu_button = Button(55, 55)
     camera = Camera()
     proj = []
     oldpoint_cube = cube_point
@@ -1487,15 +1518,39 @@ def play():
         # таймер
         time = f'{timer // 60 // 60}:{timer // 60 % 60}'
         font = pygame.font.SysFont('Consolas', 30)
-        screen.blit(font.render(time, True, (0, 0, 0)), (245, 5))
+        screen.blit(font.render(time, True, (0, 0, 0)), (245, 50))
         timer += 1
         #hp bar
-        pygame.draw.rect(screen, (0, 0, 0), (5, 5, max_health, 40), 5)
         pygame.draw.rect(screen, (255, 0, 0), (10, 10, player.heals * 0.1, 30))
         print_text(f"{round(player.heals * 0.1)}", hp / 2 - (5 * hp * 0.01), 12, (0, 0, 0), 20)
         #иконка выходы в меню(паузы)
         move_icon = rect.move(450, 0)
         screen.blit(icon, move_icon)
+        #дерево талантов
+        talant_tree.draw(0, 250, "", "tt")
+        talant_tree_move = talant_rect.move(-4, 246)
+        hp_move = hp_rect.move(0, 350)
+        speed_move = speed_rect.move(90, 350)
+        damage_move = damage_rect.move(180, 350)
+        screen.blit(talant_tree_image, talant_tree_move)
+        if tt_show:
+            move_close_icon = close_rect.move(200, 300)
+            close_tt.draw(200, 300, "x", "close_tt")
+            pygame.draw.rect(screen, (0, 0, 0), (0, 300, 250, 500))
+            screen.blit(close_tt_icon, move_close_icon)
+            #дерево талантов
+            print_text(f"{hp_level}", 10, 400, (255, 255, 255))
+            print_text(f"{speed_level}", 90, 400, (255, 255, 255))
+            print_text(f"{damage_level}", 190, 400, (255, 255, 255))
+            hp_up.draw(0, 460, "", "hp_up")
+            speed_up.draw(90, 460, "", "speed_up")
+            damage_up.draw(180, 460, "", "damage_up")
+            #иконки атрибутов
+            screen.blit(hp_talant, hp_move)
+            screen.blit(speed_talant, speed_move)
+            screen.blit(damage_talant, damage_move)
+
+
         #денюжки
         move_gold_icon = gold_rect.move(0, 50)
         print_text(f"{player.gold}", 25, 50, (255, 255, 255), 20)
