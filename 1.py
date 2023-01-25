@@ -17,7 +17,7 @@ screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 spavnpoint = 0
 enemis = []
-enemis_speed = 1
+enemis_speed = 2
 damage = 5
 music_volume = 0.5
 # костыль чтобы слайдер корректно работал
@@ -43,7 +43,7 @@ mnoj_dmg_cube = 0.1
 mnoj_spavnrate_cube = 1.5
 heals_cube = 1
 damage_cube = 1
-spavnrate_cube = 200
+spavnrate_cube = 10
 mnoj_hp_zombie = 1
 mnoj_dmg_zombie = 1
 mnoj_spavnrate_zombie = 1
@@ -76,11 +76,19 @@ markers = []
 super_hp_t = False
 super_hp_m = False
 super_hp_b = False
+super_hp_g = False
 ultra = False
 ultra_t = False
 #пауза
 pause = False
 show_ng = False
+slashform = 0
+cursed = 0
+power = 0
+red_sun = False
+miss = False
+midas_curse = False
+chakram = False
 
 
 class Button:
@@ -161,9 +169,6 @@ def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
 
 def show_pause():
     global pause
-    pygame.mixer.music.load("data/menu.mp3")
-    pygame.mixer.music.set_volume(music_volume)
-    pygame.mixer.music.play(-1)
     image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
     start_game_button = Button(170, 70)
     quit_game_button = Button(100, 70)
@@ -178,7 +183,6 @@ def show_pause():
         print_text("Game is pause", 50, 0, (90, 0, 0), 70)
         start_game_button.draw(155, 425, "Resume", "unpause")
         quit_game_button.draw(200, 765, "Quit", "menu")
-        clear()
         pygame.display.flip()
 
 
@@ -345,6 +349,10 @@ georg_images = [load_image('enemis/Georgis.png'), load_image('enemis/Georgis1.pn
                 load_image('enemis/Georgis6.png'), load_image('enemis/Georgis7.png')]
 player_images = [load_image('chars/thorn.png'), load_image('chars/thorn1-3.png'),
                  load_image('chars/thorn2.png'), load_image('chars/thorn1-3.png')]
+coin_images = [load_image('super/cursed_coin.png'), load_image('super/cursed_coin1.png'),
+               load_image('super/cursed_coin2.png'), load_image('super/cursed_coin3.png')]
+aura_of_blood_images = [load_image('super/aura_of_blood.png'), \
+                        load_image('super/aura_of_blood1.png')]
 tile_w = tile_h = 50
 
 
@@ -456,7 +464,8 @@ def clear():
         heals_zombie, \
         heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
         spavnrate_dragon, spavnrate_cube, boss, gt, ultra, ultra_t, super_hp_t, super_hp_m, \
-        super_hp_b, marks, markers, player_images, hp_level, speed_level, damage_level
+        super_hp_b, marks, markers, player_images, hp_level, speed_level, damage_level, \
+        slashform, damage, cursed, power, miss, red_sun, enemis_speed, chakram
     enemis = []
     proj = []
     eggs = []
@@ -469,9 +478,53 @@ def clear():
     ultra = False
     ultra_t = False
     boss = gt = False
+    miss = False
+    red_sun = False
+    chakram = False
+    enemis_speed = 2
     hp_level = 1
     speed_level = 1
     damage_level = 1
+    cube_point = 1
+    zombie_point = 1
+    dragon_point = 1
+    apparat_point = 1
+    spike_point = 1
+    animator = 0
+    damage = 5
+    mnoj_hp_cube = 0.1
+    mnoj_dmg_cube = 0.1
+    mnoj_spavnrate_cube = 1.5
+    heals_cube = 1
+    damage_cube = 1
+    spavnrate_cube = 200
+    mnoj_hp_zombie = 1
+    mnoj_dmg_zombie = 1
+    mnoj_spavnrate_zombie = 1
+    heals_zombie = 10
+    damage_zombie = 3
+    spavnrate_zombie = 150
+    mnoj_hp_dragon = 5
+    mnoj_dmg_dragon = 1
+    mnoj_spavnrate_dragon = 2
+    heals_dragon = 100
+    damage_dragon = 25
+    spavnrate_dragon = 500
+    mnoj_hp_apparat = 7
+    mnoj_dmg_apparat = 5
+    mnoj_spavnrate_apparat = 0.5
+    heals_apparat = 1000
+    damage_apparat = 100
+    spavnrate_apparat = 550
+    mnoj_hp_spike = 5
+    mnoj_dmg_spike = 1
+    mnoj_spavnrate_spike = 3
+    heals_spike = 500
+    damage_spike = 50
+    spavnrate_spike = 150
+    slashform = 0
+    cursed = 0
+    power = 0
     cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
         damage_cube = damage_zombie = damage_dragon = spavnrate_zombie = spavnrate_dragon = \
         spavnrate_cube = 0
@@ -553,7 +606,12 @@ class Georgis(pygame.sprite.Sprite):
         if self.rect.collidelistall(proj):
             self.heals -= damage
         if self.rect.colliderect(player.rect):
-            player.heals -= self.damage
+            if not miss:
+                player.heals -= self.damage
+            else:
+                number = random.randint(0, 20)
+                if number != 7:
+                    player.heals -= self.damage
             if char_name == 'thorn':
                 self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
@@ -654,10 +712,20 @@ class Egg(pygame.sprite.Sprite):
         global player_images, ultra_t
         if self.form == 0:
             if self.rect.colliderect(player.rect):
-                player.heals -= self.damage
+                if not miss:
+                    player.heals -= self.damage
+                else:
+                    number = random.randint(0, 20)
+                    if number != 7:
+                        player.heals -= self.damage
         else:
             if self.rect.colliderect(player.rect):
-                player.heals -= self.bomb_damage
+                if not miss:
+                    player.heals -= self.bomb_damage
+                else:
+                    number = random.randint(0, 20)
+                    if number != 7:
+                        player.heals -= self.bomb_damage
         if player.heals <= 0:
             if super_hp_t:
                 if ultra:
@@ -776,7 +844,12 @@ class Cube(pygame.sprite.Sprite):
                 else:
                     self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
-            player.heals -= self.damage
+            if not miss:
+                player.heals -= self.damage
+            else:
+                number = random.randint(0, 20)
+                if number != 7:
+                    player.heals -= self.damage
             if char_name == 'thorn':
                 self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
@@ -880,7 +953,12 @@ class Zombie(pygame.sprite.Sprite):
                 else:
                     self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
-            player.heals -= self.damage
+            if not miss:
+                player.heals -= self.damage
+            else:
+                number = random.randint(0, 20)
+                if number != 7:
+                    player.heals -= self.damage
             if char_name == 'thorn':
                 self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
@@ -991,7 +1069,12 @@ class Dragon(pygame.sprite.Sprite):
                 else:
                     self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
-            player.heals -= self.damage
+            if not miss:
+                player.heals -= self.damage
+            else:
+                number = random.randint(0, 20)
+                if number != 7:
+                    player.heals -= self.damage
             if char_name == 'thorn':
                 self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
@@ -1102,7 +1185,12 @@ class Apparat(pygame.sprite.Sprite):
                 else:
                     self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
-            player.heals -= self.damage
+            if not miss:
+                player.heals -= self.damage
+            else:
+                number = random.randint(0, 20)
+                if number != 7:
+                    player.heals -= self.damage
             if char_name == 'thorn':
                 self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
@@ -1213,7 +1301,12 @@ class Spike(pygame.sprite.Sprite):
                 else:
                     self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
-            player.heals -= self.damage
+            if not miss:
+                player.heals -= self.damage
+            else:
+                number = random.randint(0, 20)
+                if number != 7:
+                    player.heals -= self.damage
             if char_name == 'thorn':
                 self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
@@ -1259,35 +1352,58 @@ class Spike(pygame.sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, go_x, go_y):
+    def __init__(self, x, y, go_x, go_y, number):
         super().__init__(proj_group)
         self.live = True
-        self.image = load_image('bullet.png')
+        if cursed == 0:
+            self.image = load_image('bullet.png')
+        else:
+            self.image = load_image('super/cursed_coin.png')
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(x, y)
         self.heals = 2
+        self.frame = 0
+        self.number = number
         self.x = go_x
         self.y = go_y
         self.speed = [0, 0]
         self.attack_sound = pygame.mixer.Sound("data/range_attack.mp3")
-        self.rastoyanie_x = self.rect.x - self.x
-        self.rastoyanie_y = self.rect.y - self.y
-        if self.rastoyanie_y != 0 and self.rastoyanie_x != 0:
-            if abs(self.rastoyanie_x) > abs(self.rastoyanie_y):
-                koef = abs(self.rastoyanie_x) / abs(self.rastoyanie_y)
-                self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
-                              5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)) / koef)
-            elif abs(self.rastoyanie_x) < abs(self.rastoyanie_y):
-                koef = abs(self.rastoyanie_y) / abs(self.rastoyanie_x)
-                self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)) / koef,
-                              5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
-            else:
-                self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
-                              5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
-        elif self.rastoyanie_x == 0 and self.rastoyanie_y != 0:
-            self.speed[1] = 5 * -(self.rastoyanie_y / abs(self.rastoyanie_y))
-        elif self.rastoyanie_y == 0 and self.rastoyanie_x != 0:
-            self.speed[0] = 5 * -(self.rastoyanie_x / abs(self.rastoyanie_x))
+        if cursed == 0:
+            self.rastoyanie_x = self.rect.x - self.x
+            self.rastoyanie_y = self.rect.y - self.y
+            if self.rastoyanie_y != 0 and self.rastoyanie_x != 0:
+                if abs(self.rastoyanie_x) > abs(self.rastoyanie_y):
+                    koef = abs(self.rastoyanie_x) / abs(self.rastoyanie_y)
+                    self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                                  5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)) / koef)
+                elif abs(self.rastoyanie_x) < abs(self.rastoyanie_y):
+                    koef = abs(self.rastoyanie_y) / abs(self.rastoyanie_x)
+                    self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)) / koef,
+                                  5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+                else:
+                    self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                                  5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+            elif self.rastoyanie_x == 0 and self.rastoyanie_y != 0:
+                self.speed[1] = 5 * -(self.rastoyanie_y / abs(self.rastoyanie_y))
+            elif self.rastoyanie_y == 0 and self.rastoyanie_x != 0:
+                self.speed[0] = 5 * -(self.rastoyanie_x / abs(self.rastoyanie_x))
+        else:
+            if self.number == 0:
+                self.speed[0], self.speed[1] = -5, 0
+            if self.number == 1:
+                self.speed[0], self.speed[1] = -5, -5
+            if self.number == 2:
+                self.speed[0], self.speed[1] = 0, -5
+            if self.number == 3:
+                self.speed[0], self.speed[1] = 5, -5
+            if self.number == 4:
+                self.speed[0], self.speed[1] = 5, 0
+            if self.number == 5:
+                self.speed[0], self.speed[1] = 5, 5
+            if self.number == 6:
+                self.speed[0], self.speed[1] = 0, 5
+            if self.number == 7:
+                self.speed[0], self.speed[1] = -5, 5
 
     def sound(self):
         pygame.mixer.Sound.play(self.attack_sound)
@@ -1304,28 +1420,100 @@ class Bullet(pygame.sprite.Sprite):
     def death(self):
         pass
 
+    def animate(self):
+        if cursed == 1:
+            self.x = self.rect.x
+            self.y = self.rect.y
+            if self.frame == 4:
+                self.frame = 0
+            self.image = coin_images[self.frame]
+            self.frame += 1
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(self.x, self.y)
+        else:
+            pass
+
 
 class Slash(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, form):
         super().__init__(proj_group)
         self.live = True
+        self.speed = [0, 0]
         self.heals = 5
-        self.image = load_image('slash.png')
-        self.rect = self.image.get_rect()
-        self.rect = self.rect.move(x, y)
+        self.form = form
+        if not chakram:
+            if self.form == 0:
+                self.image = load_image('slash.png')
+            else:
+                self.image = load_image('super/arcana_blades1.png')
+                self.heals = 10
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(x, y)
+        else:
+            self.image = load_image('super/chakram.png')
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(x, y)
+            self.heals = 50
+            if len(markers) > 0:
+                self.rastoyanie_x = self.rect.x - markers[0].rect.x
+                self.rastoyanie_y = self.rect.y - markers[0].rect.y
+                if self.rastoyanie_y != 0 and self.rastoyanie_x != 0:
+                    if abs(self.rastoyanie_x) > abs(self.rastoyanie_y):
+                        koef = abs(self.rastoyanie_x) / abs(self.rastoyanie_y)
+                        self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                                      5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)) / koef)
+                    elif abs(self.rastoyanie_x) < abs(self.rastoyanie_y):
+                        koef = abs(self.rastoyanie_y) / abs(self.rastoyanie_x)
+                        self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)) / koef,
+                                      5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+                    else:
+                        self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                                      5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+                elif self.rastoyanie_x == 0 and self.rastoyanie_y != 0:
+                    self.speed[1] = 5 * -(self.rastoyanie_y / abs(self.rastoyanie_y))
+                elif self.rastoyanie_y == 0 and self.rastoyanie_x != 0:
+                    self.speed[0] = 5 * -(self.rastoyanie_x / abs(self.rastoyanie_x))
         self.slash_attack_sound = pygame.mixer.Sound("data/slash_attack.wav")
+        self.x = self.rect.x
+        self.y = self.rect.y
 
     def sound(self):
         pygame.mixer.Sound.play(self.slash_attack_sound)
 
     def go(self):
         if self.heals > 0:
-            self.x = self.rect.x
-            self.y = self.rect.y
-            self.image = pygame.transform.rotate(self.image, 90)
-            self.rect = self.image.get_rect()
-            self.rect = self.rect.move(self.x, self.y)
-            self.live = False
+            if not chakram:
+                if self.form == 0:
+                    self.image = pygame.transform.rotate(self.image, 90)
+                    self.rect = self.image.get_rect()
+                    self.rect = self.rect.move(self.x, self.y)
+                    self.live = False
+                else:
+                    if self.heals > 7:
+                        self.image = load_image('super/arcana_blades1.png')
+                        self.rect = self.image.get_rect()
+                        self.rect.x = self.x + 20
+                        self.rect.y = self.y + 20
+                    if self.heals <= 7 and self.heals > 5:
+                        self.image = load_image('super/arcana_blades2.png')
+                        self.rect = self.image.get_rect()
+                        self.rect.x = self.x - 20
+                        self.rect.y = self.y - 20
+                    if self.heals <= 5 and self.heals > 0:
+                        self.image = load_image('super/arcana_blades3.png')
+                        self.rect = self.image.get_rect()
+                        self.rect.x = self.x - 60
+                        self.rect.y = self.y - 60
+                    self.live = False
+            else:
+                self.x = self.rect.x
+                self.y = self.rect.y
+                self.image = pygame.transform.rotate(self.image, 90)
+                self.rect = self.image.get_rect()
+                self.rect.x = self.x
+                self.rect.y = self.y
+                self.rect = self.rect.move(self.speed[0], self.speed[1])
+                self.live = False
 
     def death(self):
         self.kill()
@@ -1334,44 +1522,97 @@ class Slash(pygame.sprite.Sprite):
 class Aura(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__(proj_group)
-        self.image = load_image('aura.png')
-        self.rect = self.image.get_rect()
+        self.red_blades = False
+        self.web = False
+        if not self.red_blades:
+            self.image = load_image('aura.png')
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(player.rect.x - 90, player.rect.y + 90)
+        else:
+            self.image = aura_of_blood_images[0]
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(player.rect.x, player.rect.y)
         self.druid = False
-        self.rect = self.rect.move(player.rect.x - 90, player.rect.y + 90)
+        self.frame = 0
 
     def go(self, x, y):
         if player.heals <= 0:
             self.kill()
         for i in enemis:
             if i.rect.colliderect(aura.rect):
-                i.heals -= i.maxheals / 1000
+                if self.red_blades:
+                    i.heals -= i.maxheals / 200
+                else:
+                    i.heals -= i.maxheals / 1000
         if self.druid:
             if player.heals != player.max_heals:
                 player.heals += player.max_heals / 2000
+        if self.red_blades:
+            if self.frame == 2:
+                self.frame = 0
+            self.image = aura_of_blood_images[self.frame]
+            self.frame += 1
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(x - 55, y - 55)
+
+    def Web(self):
+        global enemis_speed
+        self.image = load_image('super/spider_queen_aura.png')
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(25, 195)
+        enemis_speed = 1
 
 
 class Shield(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, style=0):
         super().__init__(proj_group)
-        self.heals = 200
+        if not red_sun:
+            self.heals = 200
+            self.damage = 10
+        else:
+            self.heals = 1
+            self.damage = 100
         self.level = 1
+
         self.live = True
-        self.image = load_image('shield.png')
+        self.style = style
+        if red_sun:
+            self.image = load_image('super/red_sun.png')
+            self.rect = self.image.get_rect()
+            self.rect = self.rect.move(player.rect.x - 20, player.rect.y - 10)
+        else:
+            if super_hp_g:
+                if self.style == 0:
+                    self.image = load_image('super/plasma_shield.png')
+                    self.rect = self.image.get_rect()
+                    self.rect = self.rect.move(player.rect.x - 20, player.rect.y - 10)
+                else:
+                    self.image = load_image('super/plasma_shield2.png')
+                    self.heals = player.heals // 2
+                    self.rect = self.image.get_rect()
+                    self.rect = self.rect.move(player.rect.x - 50, player.rect.y - 43)
+            else:
+                self.image = load_image('shield.png')
+                self.rect = self.image.get_rect()
+                self.rect = self.rect.move(player.rect.x - 20, player.rect.y - 10)
         self.sound = pygame.mixer.Sound("data/shield_sound.wav")
         pygame.mixer.Sound.play(self.sound)
-        self.rect = self.image.get_rect()
-        self.rect = self.rect.move(player.rect.x - 20, player.rect.y - 10)
 
     def mehanika(self):
         if self.heals > 0:
             for i in enemis:
-                if i.rect.colliderect(player.rect):
-                    player.heals += i.damage
-                    self.heals -= i.damage
+                if self.style == 0:
+                    if i.rect.colliderect(player.rect):
+                        player.heals += i.damage
+                        self.heals -= i.damage
+                else:
+                    if i.rect.colliderect(player.rect):
+                        shield.heals += i.damage
+                        self.heals -= i.damage
         else:
             for i in enemis:
                 if i.rect.colliderect(self.rect):
-                    i.heals -= 10 * self.level
+                    i.heals -= self.damage * self.level
                 self.level = 0
                 self.kill()
                 self.krak = pygame.mixer.Sound("data/krak.wav")
@@ -1399,7 +1640,7 @@ class Mark(pygame.sprite.Sprite):
 
 
 def super_hp():
-    global player_images, super_hp_t, super_hp_m, super_hp_b
+    global player_images, super_hp_t, super_hp_m, super_hp_b, super_hp_g
     if char_name == 'thorn':
         player_images = [load_image('super/thorn_hp.png'), load_image('super/thorn_hp1-3.png'),
                          load_image('super/thorn_hp2.png'), load_image('super/thorn_hp1-3.png')]
@@ -1419,13 +1660,53 @@ def super_hp():
     if char_name == 'bloodthief':
         super_hp_b = True
 
+    if char_name == 'gostshell':
+        super_hp_g = True
+
 
 def super_damage():
-    pass
+    global slashform, damage, cursed, power, player_images, red_sun
+    if char_name == 'thorn':
+        slashform = 1
+        damage += 2
+
+    if char_name == 'midas':
+        cursed = 1
+
+    if char_name == 'shaman':
+        aura.red_blades = True
+
+    if char_name == 'bloodthief':
+        power = 1
+        player_images = [load_image('super/power_of_blood.png'),
+                         load_image('super/power_of_blood1-3.png'),
+                         load_image('super/power_of_blood2.png'),
+                         load_image('super/power_of_blood1-3.png')]
+
+    if char_name == 'gostshell':
+        red_sun = 1
 
 
 def super_speed():
-    pass
+    global player_images, miss, midas_curse, chakram
+    if char_name == 'thorn':
+        player_images = [load_image('super/thorn_miss.png'),
+                         load_image('super/thorn_miss1-3.png'),
+                         load_image('super/thorn_miss2.png'),
+                         load_image('super/thorn_miss1-3.png')]
+        miss = True
+    if char_name == 'midas':
+        midas_curse = True
+        player_images = [load_image('super/midas_keeper.png'),
+                         load_image('super/midas_keeper1-3.png'),
+                         load_image('super/midas_keeper2.png'),
+                         load_image('super/midas_keeper1-3.png')]
+    if char_name == 'shaman':
+        aura.web = True
+        aura.Web()
+
+    if char_name == 'bloodthief':
+        chakram = True
 
 
 def generate(level):
@@ -1471,7 +1752,8 @@ def play():
         spavnrate_dragon, boss, georgis, show_boss_hp_bar, apparat_point, heals_apparat, \
         damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
         spavnrate_spike, aura, damage, kills, old_kills, tt_show, ultra_t, player_images, \
-        ultra, markers, marks, hp_level, speed_level, damage_level, pause, show_ng
+        ultra, markers, marks, hp_level, speed_level, damage_level, pause, show_ng, shield, \
+        shield2, slash, damage
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -1507,7 +1789,7 @@ def play():
     old_kills = kills
     can_atak = 0
     frame_tick = 0
-    spavnrate_cub = 200
+    spavnrate_cub = 10
     spavnrate_zomb = 150
     spavnrate_drag = 500
     spavnrate_app = 550
@@ -1530,6 +1812,7 @@ def play():
     player, level_x, level_y = generate(load_level(name))
     running = True
     shield = None
+    shield2 = None
     goup = godown = goleft = goright = False
     icon = load_image("menu_btn.png")
     rect = icon.get_rect()
@@ -1598,19 +1881,34 @@ def play():
             ultra = True
         if char_name == 'gostshell':
             if shield == None:
-                if kills > 3:
-                    shield = Shield()
-                    old_kills = kills
+                if not red_sun:
+                    if kills > 3:
+                        shield = Shield()
+                        if super_hp_g:
+                            shield2 = Shield(1)
+                        old_kills = kills
+                else:
+                    if kills > 0:
+                        shield = Shield()
+                        if super_hp_g:
+                            shield2 = Shield(1)
+                        old_kills = kills
             else:
                 if kills > old_kills * shield.level:
                     shield.levelup()
                     old_kills = kills
                 shield.mehanika()
+                if shield2 != None:
+                    shield2.mehanika()
                 if shield.heals <= 0:
                     kills = 0
                     old_kills = 0
                     shield.mehanika()
                     shield = None
+                if shield2 != None:
+                    if shield2.heals <= 0:
+                        shield2.mehanika()
+                        shield2 = None
         if char_name == 'shaman':
             aura.go(player.rect.x, player.rect.y)
         if not boss:
@@ -1618,6 +1916,8 @@ def play():
                 if char_name == 'bloodthief':
                     if random.randint(1, 20) == 7:
                         player.heals *= 1.2
+                        if power:
+                            damage += 10
                         cube = Cube()
                         cube.mark = True
                         enemis.append(cube)
@@ -1637,6 +1937,8 @@ def play():
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
                             player.health *= 1.2
+                            if power:
+                                damage += 10
                             zombie = Zombie()
                             zombie.mark = True
                             enemis.append(zombie)
@@ -1653,6 +1955,8 @@ def play():
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
                             player.health *= 1.2
+                            if power:
+                                damage += 10
                             dragon = Dragon()
                             dragon.mark = True
                             enemis.append(dragon)
@@ -1669,6 +1973,8 @@ def play():
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
                             player.health *= 1.2
+                            if power:
+                                damage += 10
                             apparat = Apparat()
                             apparat.mark = True
                             enemis.append(apparat)
@@ -1682,6 +1988,8 @@ def play():
                     if char_name == 'bloodthief':
                         if random.randint(1, 20) == 7:
                             player.health *= 1.2
+                            if power:
+                                damage += 10
                             spike = Spike()
                             spike.mark = True
                             enemis.append(spike)
@@ -1704,6 +2012,9 @@ def play():
                 ultra_t = False
                 ultra = False
                 ultra_timer = 0
+        if midas_curse:
+            if timer % 60 == 0:
+                player.gold += 2
         if super_hp_b:
             for i in enemis:
                 if len(marks) < len(markers):
@@ -1742,8 +2053,12 @@ def play():
                     markers.remove(i)
                     kills += 1
                     player.heals /= 1.2
+                    damage -= 10
         for j in proj:
             j.go()
+            if cursed == 1:
+                if timer % 5 == 0:
+                    j.animate()
             if j.heals <= 0:
                 j.death()
                 proj.remove(j)
@@ -1856,14 +2171,23 @@ def play():
                 if event.button == 1:
                     if player.atak == 1:
                         if player.type == '0':
-                            pos = pygame.mouse.get_pos()
-                            bullet = Bullet(235, 410, pos[0], pos[1])
-                            proj.append(bullet)
-                            bullet.sound()
-                            player.atak = 0
-                            can_atak = 0
+                            if cursed == 1:
+                                pos = pygame.mouse.get_pos()
+                                for i in range(8):
+                                    bullet = Bullet(235, 410, pos[0], pos[1], i)
+                                    proj.append(bullet)
+                                bullet.sound()
+                                player.atak = 0
+                                can_atak = 0
+                            else:
+                                pos = pygame.mouse.get_pos()
+                                bullet = Bullet(235, 410, pos[0], pos[1], 0)
+                                proj.append(bullet)
+                                bullet.sound()
+                                player.atak = 0
+                                can_atak = 0
                         else:
-                            slash = Slash(190, 360)
+                            slash = Slash(190, 360, slashform)
                             proj.append(slash)
                             slash.sound()
                             player.atak = 0
