@@ -70,6 +70,13 @@ spavnrate_spike = 150
 boss = False
 eggs = []
 georg = []
+marks = []
+markers = []
+super_hp_t = False
+super_hp_m = False
+super_hp_b = False
+ultra = False
+ultra_t = False
 
 
 class Button:
@@ -323,10 +330,13 @@ class Tile(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
-        self.heals = 1000
+        self.max_heals = 1000
+        self.heals = self.max_heals
         self.atak = 1
         self.speed = 2
         self.gold = 0
+        if char_name == 'thorn':
+            self.return_d = 20
         if char_name in ['midas', 'shaman']:
             self.type = '0'
             self.atakspeed = 25
@@ -337,7 +347,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect = self.rect.move(tile_w * pos_x + 15, tile_h * pos_y + 5)
 
-    def animate(self,frame):
+    def animate(self, frame):
         self.x = self.rect.x
         self.y = self.rect.y
         self.image = player_images[frame]
@@ -349,9 +359,10 @@ class Player(pygame.sprite.Sprite):
 def end_game():
     global point
     global music_volume
-    global  eggs, enemis, proj, georg, cube_point, dragon_point, zombie_point, heals_zombie, \
-    heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
-    spavnrate_dragon, spavnrate_cube, boss, gt
+    global eggs, enemis, proj, georg, cube_point, dragon_point, zombie_point, heals_zombie, \
+     heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
+     spavnrate_dragon, spavnrate_cube, boss, gt, ultra, ultra_t, super_hp_t, super_hp_m, \
+     super_hp_b, marks, markers
     pygame.mixer.music.load("data/menu.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -383,6 +394,13 @@ def end_game():
         proj = []
         eggs = []
         georg = []
+        marks = []
+        markers = []
+        super_hp_t = False
+        super_hp_m = False
+        super_hp_b = False
+        ultra = False
+        ultra_t = False
         boss = gt = False
         cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
         damage_cube = damage_zombie = damage_dragon = spavnrate_zombie = spavnrate_dragon = \
@@ -407,7 +425,7 @@ class Georgis(pygame.sprite.Sprite):
         self.rect = self.rect.move(500, 0)
 
     def mislitelniy_process(self):
-        global point
+        global point, player_images, ultra_t
         if self.heals > 0:
             if self.rect.x < 0:
                 self.rect.x = 0
@@ -450,10 +468,31 @@ class Georgis(pygame.sprite.Sprite):
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
-                self.heals -= self.damage * 20 / 100
+                self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
-                player.kill()
-                end_game()
+                if super_hp_t:
+                    if ultra:
+                        player.heals = 1
+                        player.return_d = 100
+                        player_images = [load_image('super/thorn_hp_ultra.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png'),
+                                         load_image('super/thorn_hp_ultra2.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png')]
+                        ultra_t = True
+                    else:
+                        player.kill()
+                        end_game()
+                elif super_hp_m:
+                    if player.gold >= 1000:
+                        player.gold -= 1000
+                        player.heals += player.max_heals
+                    else:
+                        player.kill()
+                        end_game()
+                else:
+                    player.kill()
+                    end_game()
+
 
     def bomb_atak(self):
         for i in range(8):
@@ -526,18 +565,36 @@ class Egg(pygame.sprite.Sprite):
         self.rect = self.rect.move(3, 3)
 
     def hit(self):
+        global player_images, ultra_t
         if self.form == 0:
             if self.rect.colliderect(player.rect):
                 player.heals -= self.damage
-                if player.heals <= 0:
-                    player.kill()
-                    end_game()
         else:
             if self.rect.colliderect(player.rect):
                 player.heals -= self.bomb_damage
-                if player.heals <= 0:
+        if player.heals <= 0:
+            if super_hp_t:
+                if ultra:
+                    player.heals = 1
+                    player.return_d = 100
+                    player_images = [load_image('super/thorn_hp_ultra.png'),
+                                     load_image('super/thorn_hp_ultra1-3.png'),
+                                     load_image('super/thorn_hp_ultra2.png'),
+                                     load_image('super/thorn_hp_ultra1-3.png')]
+                    ultra_t = True
+                else:
                     player.kill()
                     end_game()
+            elif super_hp_m:
+                if player.gold >= 1000:
+                    player.gold -= 1000
+                    player.heals += player.max_heals
+                else:
+                    player.kill()
+                    end_game()
+            else:
+                player.kill()
+                end_game()
 
     def Boom(self):
         if self.cloack == 100:
@@ -585,7 +642,7 @@ class Cube(pygame.sprite.Sprite):
             self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
 
     def mislitelniy_process(self):
-        global point, cube_point
+        global point, cube_point, player_images, ultra_t
         if self.heals > 0:
             rastoyanie_x = self.rect.x - player.rect.x
             rastoyanie_y = self.rect.y - player.rect.y
@@ -627,14 +684,38 @@ class Cube(pygame.sprite.Sprite):
             if not self.mark:
                 self.heals -= damage
             else:
-                self.heals -= damage * 3
+                if super_hp_b:
+                    self.heals -= damage / 2
+                    self.damage = 0
+                else:
+                    self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
-                self.heals -= self.damage * 20 / 100
+                self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
-                player.kill()
-                end_game()
+                if super_hp_t:
+                    if ultra:
+                        player.heals = 1
+                        player.return_d = 100
+                        player_images = [load_image('super/thorn_hp_ultra.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png'),
+                                         load_image('super/thorn_hp_ultra2.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png')]
+                        ultra_t = True
+                    else:
+                        player.kill()
+                        end_game()
+                elif super_hp_m:
+                    if player.gold >= 1000:
+                        player.gold -= 1000
+                        player.heals += player.max_heals
+                    else:
+                        player.kill()
+                        end_game()
+                else:
+                    player.kill()
+                    end_game()
 
     def animate(self):
         self.x = self.rect.x
@@ -665,7 +746,7 @@ class Zombie(pygame.sprite.Sprite):
             self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
 
     def mislitelniy_process(self):
-        global point, zombie_point
+        global point, zombie_point, player_images, ultra_t
         if self.heals > 0:
             rastoyanie_x = self.rect.x - player.rect.x
             rastoyanie_y = self.rect.y - player.rect.y
@@ -707,14 +788,38 @@ class Zombie(pygame.sprite.Sprite):
             if not self.mark:
                 self.heals -= damage
             else:
-                self.heals -= damage * 3
+                if super_hp_b:
+                    self.heals -= damage / 2
+                    self.damage = 0
+                else:
+                    self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
-                self.heals -= self.damage * 20 / 100
+                self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
-                player.kill()
-                end_game()
+                if super_hp_t:
+                    if ultra:
+                        player.heals = 1
+                        player.return_d = 100
+                        player_images = [load_image('super/thorn_hp_ultra.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png'),
+                                         load_image('super/thorn_hp_ultra2.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png')]
+                        ultra_t = True
+                    else:
+                        player.kill()
+                        end_game()
+                elif super_hp_m:
+                    if player.gold >= 1000:
+                        player.gold -= 1000
+                        player.heals += player.max_heals
+                    else:
+                        player.kill()
+                        end_game()
+                else:
+                    player.kill()
+                    end_game()
 
     def animate(self):
         self.x = self.rect.x
@@ -752,7 +857,7 @@ class Dragon(pygame.sprite.Sprite):
             self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
 
     def mislitelniy_process(self):
-        global point, dragon_point
+        global point, dragon_point, player_images, ultra_t
         if self.heals > 0:
             rastoyanie_x = self.rect.x - player.rect.x
             rastoyanie_y = self.rect.y - player.rect.y
@@ -794,14 +899,38 @@ class Dragon(pygame.sprite.Sprite):
             if not self.mark:
                 self.heals -= damage
             else:
-                self.heals -= damage * 3
+                if super_hp_b:
+                    self.heals -= damage / 2
+                    self.damage = 0
+                else:
+                    self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
-                self.heals -= self.damage * 20 / 100
+                self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
-                player.kill()
-                end_game()
+                if super_hp_t:
+                    if ultra:
+                        player.heals = 1
+                        player.return_d = 100
+                        player_images = [load_image('super/thorn_hp_ultra.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png'),
+                                         load_image('super/thorn_hp_ultra2.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png')]
+                        ultra_t = True
+                    else:
+                        player.kill()
+                        end_game()
+                elif super_hp_m:
+                    if player.gold >= 1000:
+                        player.gold -= 1000
+                        player.heals += player.max_heals
+                    else:
+                        player.kill()
+                        end_game()
+                else:
+                    player.kill()
+                    end_game()
 
     def animate(self):
         self.x = self.rect.x
@@ -839,7 +968,7 @@ class Apparat(pygame.sprite.Sprite):
             self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
 
     def mislitelniy_process(self):
-        global point, apparat_point
+        global point, apparat_point, player_images, ultra_t
         if self.heals > 0:
             rastoyanie_x = self.rect.x - player.rect.x
             rastoyanie_y = self.rect.y - player.rect.y
@@ -881,14 +1010,38 @@ class Apparat(pygame.sprite.Sprite):
             if not self.mark:
                 self.heals -= damage
             else:
-                self.heals -= damage * 3
+                if super_hp_b:
+                    self.heals -= damage / 2
+                    self.damage = 0
+                else:
+                    self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
-                self.heals -= self.damage * 20 / 100
+                self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
-                player.kill()
-                end_game()
+                if super_hp_t:
+                    if ultra:
+                        player.heals = 1
+                        player.return_d = 100
+                        player_images = [load_image('super/thorn_hp_ultra.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png'),
+                                         load_image('super/thorn_hp_ultra2.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png')]
+                        ultra_t = True
+                    else:
+                        player.kill()
+                        end_game()
+                elif super_hp_m:
+                    if player.gold >= 1000:
+                        player.gold -= 1000
+                        player.heals += player.max_heals
+                    else:
+                        player.kill()
+                        end_game()
+                else:
+                    player.kill()
+                    end_game()
 
     def animate(self):
         self.x = self.rect.x
@@ -926,7 +1079,7 @@ class Spike(pygame.sprite.Sprite):
             self.rect = self.rect.move(random.randint(-25, 500), random.choice((-25, 851)))
 
     def mislitelniy_process(self):
-        global point, spike_point
+        global point, spike_point, player_images, ultra_t
         if self.heals > 0:
             rastoyanie_x = self.rect.x - player.rect.x
             rastoyanie_y = self.rect.y - player.rect.y
@@ -968,14 +1121,38 @@ class Spike(pygame.sprite.Sprite):
             if not self.mark:
                 self.heals -= damage
             else:
-                self.heals -= damage * 3
+                if super_hp_b:
+                    self.heals -= damage / 2
+                    self.damage = 0
+                else:
+                    self.heals -= damage * 3
         if self.rect.colliderect(player.rect):
             player.heals -= self.damage
             if char_name == 'thorn':
-                self.heals -= self.damage * 20 / 100
+                self.heals -= self.damage * player.return_d / 100
             if player.heals <= 0:
-                player.kill()
-                end_game()
+                if super_hp_t:
+                    if ultra:
+                        player.heals = 1
+                        player.return_d = 100
+                        player_images = [load_image('super/thorn_hp_ultra.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png'),
+                                         load_image('super/thorn_hp_ultra2.png'),
+                                         load_image('super/thorn_hp_ultra1-3.png')]
+                        ultra_t = True
+                    else:
+                        player.kill()
+                        end_game()
+                elif super_hp_m:
+                    if player.gold >= 1000:
+                        player.gold -= 1000
+                        player.heals += player.max_heals
+                    else:
+                        player.kill()
+                        end_game()
+                else:
+                    player.kill()
+                    end_game()
 
     def animate(self):
         self.x = self.rect.x
@@ -1074,6 +1251,7 @@ class Aura(pygame.sprite.Sprite):
         super().__init__(proj_group)
         self.image = load_image('aura.png')
         self.rect = self.image.get_rect()
+        self.druid = False
         self.rect = self.rect.move(player.rect.x - 90, player.rect.y + 90)
 
     def go(self, x, y):
@@ -1082,6 +1260,9 @@ class Aura(pygame.sprite.Sprite):
         for i in enemis:
             if i.rect.colliderect(aura.rect):
                 i.heals -= i.maxheals / 1000
+        if self.druid:
+            if player.heals != player.max_heals:
+                player.heals += player.max_heals / 2000
 
 
 class Shield(pygame.sprite.Sprite):
@@ -1114,6 +1295,52 @@ class Shield(pygame.sprite.Sprite):
     def levelup(self):
         self.level += 1
         self.heals = 200 * self.level
+
+
+class Mark(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(proj_group)
+        self.image = load_image('super/mark.png')
+        self.rect = self.image.get_rect()
+        self.frame = 0
+        self.rect = self.rect.move(-100, -200)
+
+    def go(self, enemy):
+        self.rect.x = enemis[enemy].rect.x
+        self.rect.y = enemis[enemy].rect.y - 100
+
+    def death(self):
+        self.kill()
+
+
+def super_hp():
+    global player_images, super_hp_t, super_hp_m, super_hp_b
+    if char_name == 'thorn':
+        player_images = [load_image('super/thorn_hp.png'), load_image('super/thorn_hp1-3.png'),
+                         load_image('super/thorn_hp2.png'), load_image('super/thorn_hp1-3.png')]
+        super_hp_t = True
+    if char_name == 'shaman':
+        aura.druid = True
+        player_images = [load_image('super/shaman_druid.png'),
+                         load_image('super/shaman_druid1-3.png'),
+                         load_image('super/shaman_druid2.png'),
+                         load_image('super/shaman_druid1-3.png')]
+    if char_name == 'midas':
+        player_images = [load_image('super/midas_unded.png'),
+                         load_image('super/midas_unded1-3.png'),
+                         load_image('super/midas_unded2.png'),
+                         load_image('super/midas_unded1-3.png')]
+        super_hp_m = True
+    if char_name == 'bloodthief':
+        super_hp_b = True
+
+
+def super_damage():
+    pass
+
+
+def super_speed():
+    pass
 
 
 def generate(level):
@@ -1158,7 +1385,8 @@ def play():
            heals_zombie, damage_zombie, spavnrate_zombie, heals_dragon, damage_dragon, \
            spavnrate_dragon, boss, georgis, show_boss_hp_bar, apparat_point, heals_apparat, \
            damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
-           spavnrate_spike, aura, damage, kills, old_kills, tt_show
+           spavnrate_spike, aura, damage, kills, old_kills, tt_show, ultra_t, player_images, \
+           ultra, markers, marks
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -1181,6 +1409,7 @@ def play():
     back_to_menu_button = Button(55, 55)
     camera = Camera()
     proj = []
+    ultra_timer = 0
     oldpoint_cube = cube_point
     oldpoint_zombie = zombie_point
     oldpoint_dragon = dragon_point
@@ -1278,6 +1507,8 @@ def play():
                 spavnrate_spik = spavnrate_spike // 1
             oldpoint_spike = spike_point
         spavnpoint += 1
+        if timer % 3600 == 0:
+            ultra = True
         if char_name == 'gostshell':
             if shield == None:
                 if kills > 3:
@@ -1303,6 +1534,7 @@ def play():
                         cube = Cube()
                         cube.mark = True
                         enemis.append(cube)
+                        markers.append(cube)
                     else:
                         enemis.append(Cube())
                 else:
@@ -1321,6 +1553,7 @@ def play():
                             zombie = Zombie()
                             zombie.mark = True
                             enemis.append(zombie)
+                            markers.append(zombie)
                         else:
                             enemis.append(Zombie())
                     else:
@@ -1336,6 +1569,7 @@ def play():
                             dragon = Dragon()
                             dragon.mark = True
                             enemis.append(dragon)
+                            markers.append(dragon)
                         else:
                             enemis.append(Dragon())
                     else:
@@ -1351,6 +1585,7 @@ def play():
                             apparat = Apparat()
                             apparat.mark = True
                             enemis.append(apparat)
+                            markers.append(apparat)
                         else:
                             enemis.append(Apparat())
                     else:
@@ -1363,6 +1598,7 @@ def play():
                             spike = Spike()
                             spike.mark = True
                             enemis.append(spike)
+                            markers.append(spike)
                         else:
                             enemis.append(Spike())
                     else:
@@ -1370,6 +1606,30 @@ def play():
                     if spike_point % 7 == 0:
                         for i in range(3):
                             enemis.append(Spike())
+        if ultra_t:
+            ultra_timer += 1
+            if ultra_timer % 300 == 0:
+                ultra = False
+                player_images = [load_image('super/thorn_hp.png'),
+                                 load_image('super/thorn_hp1-3.png'),
+                                 load_image('super/thorn_hp2.png'),
+                                 load_image('super/thorn_hp1-3.png')]
+                ultra_t = False
+                ultra = False
+                ultra_timer = 0
+        if super_hp_b:
+            for i in enemis:
+                if len(marks) < len(markers):
+                    while len(marks) != len(markers):
+                        mark = Mark()
+                        marks.append(mark)
+                elif len(marks) > len(markers):
+                    while len(marks) != len(markers):
+                        marks[len(marks) - 1].death()
+                        marks.pop(len(marks) - 1)
+                else:
+                    for i in range(len(marks)):
+                        marks[i].go(i)
         if boss:
             show_boss_hp_bar = True
             if georg[0].live == False:
@@ -1392,6 +1652,7 @@ def play():
             else:
                 if i.live == False:
                     enemis.remove(i)
+                    markers.remove(i)
                     kills += 1
                     player.heals /= 1.2
         for j in proj:
