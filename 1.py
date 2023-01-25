@@ -24,13 +24,14 @@ music_volume = 0.5
 slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81, 74),
                 handleColour=(255, 255, 255))
 show_boss_hp_bar = False
-#количество очков заработанных за 1 забаег
+# количество очков заработанных за 1 забаег
 point = 0
-#tree talant
+# tree talant
 tt_show = False
 hp_level = 1
 speed_level = 1
 damage_level = 1
+# мобы и другое
 cube_point = 1
 zombie_point = 1
 dragon_point = 1
@@ -77,6 +78,9 @@ super_hp_m = False
 super_hp_b = False
 ultra = False
 ultra_t = False
+#пауза
+pause = False
+show_ng = False
 
 
 class Button:
@@ -85,7 +89,7 @@ class Button:
         self.button_click = pygame.mixer.Sound("data/button.wav")
 
     def draw(self, x, y, text, function=None):
-        global char_name, tt_show, hp_level, speed_level, damage_level
+        global char_name, tt_show, hp_level, speed_level, damage_level, damage, pause, show_ng
         # function передает вызов функции или саму функцию,допустим начало игры или выход
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = pygame.mouse.get_pressed()
@@ -103,6 +107,7 @@ class Button:
                             play()
                         elif function == "menu":
                             show_menu()
+                            clear()
                         elif function == "settings":
                             settings()
                         elif function == "choose_hero":
@@ -118,18 +123,33 @@ class Button:
                             char_name = "bloodthief"
                         elif function == "thorn":
                             char_name = "thorn"
-                        #tt - tree talant
+                        # tt - tree talant
                         elif function == "tt":
-                           tt_show = True
+                            tt_show = True
                         elif function == "close_tt":
                             tt_show = False
                             print("close")
                         elif function == "hp_up":
                             hp_level += 1
+                            player.heals += 100 * hp_level
+                            player.gold -= round(500 * (1.5 * hp_level))
                         elif function == "speed_up":
                             speed_level += 1
+                            player.atakspeed -= 2
+                            player.speed += 0.5
+                            player.gold -= round(500 * (1.5 * speed_level))
                         elif function == "damage_up":
                             damage_level += 1
+                            damage += 10 * damage_level
+                            player.gold -= round(500 * (1.5 * damage_level))
+                        elif function == "unpause":
+                            pause = False
+                        elif function == "pause":
+                            pause = True
+                            show_pause()
+                        elif function == "ng":
+                            show_ng = False
+                            ng_plus()
 
 
 # функция для печатания текста
@@ -137,6 +157,29 @@ def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
     font_type = pygame.font.SysFont('arial', font_size)
     message = font_type.render(text, True, font_color)
     screen.blit(message, (x, y))
+
+
+def show_pause():
+    global pause
+    pygame.mixer.music.load("data/menu.mp3")
+    pygame.mixer.music.set_volume(music_volume)
+    pygame.mixer.music.play(-1)
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
+    start_game_button = Button(170, 70)
+    quit_game_button = Button(100, 70)
+    while pause:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    play()
+        screen.blit(image_background, (0, 0))
+        print_text("Game is pause", 50, 0, (90, 0, 0), 70)
+        start_game_button.draw(155, 425, "Resume", "unpause")
+        quit_game_button.draw(200, 765, "Quit", "menu")
+        clear()
+        pygame.display.flip()
 
 
 # настройки игры(звук)
@@ -194,7 +237,7 @@ def show_menu():
         pygame.display.flip()
 
 
-#меню выбора персонажей
+# меню выбора персонажей
 def choose_hero():
     global player_images, char_name
     image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
@@ -214,9 +257,9 @@ def choose_hero():
         print_text("Hero", 0, 50, (90, 0, 0), 50)
         print_text("Description", 140, 50, (90, 0, 0), 50)
         print_text("Choose Hero", 140, 0, (166, 189, 215), 50)
-        #герой
+        # герой
         midas_btn.draw(0, 100, "Midas", "midas")
-        #описание героя
+        # описание героя
         print_text("makes money", 140, 110, (255, 255, 255), 30)
         thorn_btn.draw(0, 200, "Thorn", "thorn")
         print_text("Returns damage to the offender", 140, 210, (255, 255, 255), 30)
@@ -230,7 +273,7 @@ def choose_hero():
         print_text("There are many of us, but", 210, 500, (255, 255, 255), 30)
         print_text("he is alone!", 210, 530, (255, 255, 255), 30)
         menu_btn.draw(180, 720, "Menu", "menu")
-        #вот здесь все пиши для выбора персонажей
+        # вот здесь все пиши для выбора персонажей
         if char_name == 'midas':
             player_images = [load_image('chars/midas.png'), load_image('chars/midas1-3.png'),
                              load_image('chars/midas2.png'), load_image('chars/midas1-3.png')]
@@ -276,7 +319,7 @@ def load_image(name, colorkey=None):
 
 def ng_plus():
     global mnoj_hp_dragon, mnoj_hp_zombie, mnoj_hp_cube, mnoj_dmg_zombie, mnoj_dmg_dragon, \
-    mnoj_dmg_cube
+        mnoj_dmg_cube
     mnoj_dmg_dragon *= 2
     mnoj_dmg_cube *= 2
     mnoj_dmg_zombie *= 2
@@ -359,10 +402,6 @@ class Player(pygame.sprite.Sprite):
 def end_game():
     global point
     global music_volume
-    global eggs, enemis, proj, georg, cube_point, dragon_point, zombie_point, heals_zombie, \
-     heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
-     spavnrate_dragon, spavnrate_cube, boss, gt, ultra, ultra_t, super_hp_t, super_hp_m, \
-     super_hp_b, marks, markers
     pygame.mixer.music.load("data/menu.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -370,12 +409,6 @@ def end_game():
     show = True
     start_game_button = Button(150, 70)
     quit_game_button = Button(100, 70)
-    if boss:
-        text = "You Win!"
-        color = (0, 255, 0)
-    else:
-        text = "You Lose"
-        color = (255, 0, 0)
     while show:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -386,27 +419,81 @@ def end_game():
                 if event.key == pygame.K_RETURN:
                     play()
         screen.blit(image_background, (0, 0))
-        print_text(text, 130, 180, color, 70)
-        print_text(f"Your score {player.gold}", 130, 383, (76, 81, 74), 50)
+        print_text("You Lose", 130, 180, (255, 0, 0), 70)
         start_game_button.draw(0, 775, "Restart", "play")
-        global enemis, proj
-        enemis = []
-        proj = []
-        eggs = []
-        georg = []
-        marks = []
-        markers = []
-        super_hp_t = False
-        super_hp_m = False
-        super_hp_b = False
-        ultra = False
-        ultra_t = False
-        boss = gt = False
-        cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
+        quit_game_button.draw(400, 775, "Quit", "menu")
+        clear()
+        pygame.display.flip()
+
+
+def show_new_game():
+    global music_volume, show_ng
+    pygame.mixer.music.load("data/menu.mp3")
+    pygame.mixer.music.set_volume(music_volume)
+    pygame.mixer.music.play(-1)
+    image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
+    start_game_button = Button(170, 70)
+    quit_game_button = Button(100, 70)
+    while show_ng:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    show_menu()
+                if event.key == pygame.K_RETURN:
+                    play()
+        screen.blit(image_background, (0, 0))
+        print_text("You Win", 130, 180, (0, 255, 0), 70)
+        print_text("You want to start NG", 70, 250, (166, 189, 215), 50)
+        start_game_button.draw(0, 775, "Resume", "ng")
+        quit_game_button.draw(400, 775, "Quit", "menu")
+        pygame.display.flip()
+
+
+def clear():
+    global enemis, proj, eggs, enemis, proj, georg, cube_point, dragon_point, zombie_point, \
+        heals_zombie, \
+        heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
+        spavnrate_dragon, spavnrate_cube, boss, gt, ultra, ultra_t, super_hp_t, super_hp_m, \
+        super_hp_b, marks, markers, player_images, hp_level, speed_level, damage_level
+    enemis = []
+    proj = []
+    eggs = []
+    georg = []
+    marks = []
+    markers = []
+    super_hp_t = False
+    super_hp_m = False
+    super_hp_b = False
+    ultra = False
+    ultra_t = False
+    boss = gt = False
+    hp_level = 1
+    speed_level = 1
+    damage_level = 1
+    cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
         damage_cube = damage_zombie = damage_dragon = spavnrate_zombie = spavnrate_dragon = \
         spavnrate_cube = 0
-        quit_game_button.draw(400, 775, "Quit", "exit")
-        pygame.display.flip()
+    if char_name == 'midas':
+        player_images = [load_image('chars/midas.png'), load_image('chars/midas1-3.png'),
+                         load_image('chars/midas2.png'), load_image('chars/midas1-3.png')]
+    if char_name == 'thorn':
+        player_images = [load_image('chars/thorn.png'), load_image('chars/thorn1-3.png'),
+                         load_image('chars/thorn2.png'), load_image('chars/thorn1-3.png')]
+    if char_name == 'shaman':
+        player_images = [load_image('chars/shaman.png'), load_image('chars/shaman1-3.png'),
+                         load_image('chars/shaman2.png'), load_image('chars/shaman1-3.png')]
+    if char_name == 'gostshell':
+        player_images = [load_image('chars/gostshell.png'),
+                         load_image('chars/gostshell1-3.png'),
+                         load_image('chars/gostshell2.png'),
+                         load_image('chars/gostshell1-3.png')]
+    if char_name == 'bloodthief':
+        player_images = [load_image('chars/bloodthief.png'),
+                         load_image('chars/bloodthief1-3.png'),
+                         load_image('chars/bloodthief2.png'),
+                         load_image('chars/bloodthief1-3.png')]
 
 
 class Georgis(pygame.sprite.Sprite):
@@ -492,7 +579,6 @@ class Georgis(pygame.sprite.Sprite):
                 else:
                     player.kill()
                     end_game()
-
 
     def bomb_atak(self):
         for i in range(8):
@@ -1229,7 +1315,6 @@ class Slash(pygame.sprite.Sprite):
         self.rect = self.rect.move(x, y)
         self.slash_attack_sound = pygame.mixer.Sound("data/slash_attack.wav")
 
-
     def sound(self):
         pygame.mixer.Sound.play(self.slash_attack_sound)
 
@@ -1243,7 +1328,7 @@ class Slash(pygame.sprite.Sprite):
             self.live = False
 
     def death(self):
-            self.kill()
+        self.kill()
 
 
 class Aura(pygame.sprite.Sprite):
@@ -1380,20 +1465,23 @@ class Camera:
 # игровой цикл
 def play():
     global all_sprites, enemi_group, tiles_group, player_group, box_g, player, \
-           level_x, level_y, player_image, proj_group, proj, heals_cube, damage_cube, \
-           spavnrate_cube, animator, eggs, georg, cube_point, zombie_point, dragon_point, \
-           heals_zombie, damage_zombie, spavnrate_zombie, heals_dragon, damage_dragon, \
-           spavnrate_dragon, boss, georgis, show_boss_hp_bar, apparat_point, heals_apparat, \
-           damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
-           spavnrate_spike, aura, damage, kills, old_kills, tt_show, ultra_t, player_images, \
-           ultra, markers, marks
+        level_x, level_y, player_image, proj_group, proj, heals_cube, damage_cube, \
+        spavnrate_cube, animator, eggs, georg, cube_point, zombie_point, dragon_point, \
+        heals_zombie, damage_zombie, spavnrate_zombie, heals_dragon, damage_dragon, \
+        spavnrate_dragon, boss, georgis, show_boss_hp_bar, apparat_point, heals_apparat, \
+        damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
+        spavnrate_spike, aura, damage, kills, old_kills, tt_show, ultra_t, player_images, \
+        ultra, markers, marks, hp_level, speed_level, damage_level, pause, show_ng
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
-    #для прокачки
-    hp_up = Button(50, 50)
-    speed_up = Button(50, 50)
-    damage_up = Button(50, 50)
+    # для прокачки
+    hp_up = Button(120, 70)
+    speed_up = Button(120, 70)
+    damage_up = Button(120, 70)
+    hp_ult_btn = Button(100, 30)
+    speed_ult_btn = Button(100, 30)
+    damage_ult_btn = Button(100, 30)
     hp_talant = load_image("hp_talant.png")
     hp_rect = hp_talant.get_rect()
     speed_talant = load_image("speed_talant.png")
@@ -1447,13 +1535,12 @@ def play():
     rect = icon.get_rect()
     max_health = player.heals * 0.1 + 10
     hp = player.heals * 0.1
-    #иконка для денюжки
+    # иконка для денюжки
     gold_icon = load_image("gold.png")
     gold_icon = pygame.transform.scale(gold_icon, (25, 25))
     gold_rect = gold_icon.get_rect()
     if char_name == 'shaman':
         aura = Aura(player.rect.x, player.rect.y)
-    #кнопки для item bar
     while running:
         global spavnpoint
         if animator == 4:
@@ -1720,12 +1807,21 @@ def play():
                 if i.live == False:
                     eggs.remove(i)
         for event in pygame.event.get():
-            back_to_menu_button.draw(450, 0, "menu", "menu")
+            # пауза
+            back_to_menu_button.draw(450, 0, "menu", "pause")
+            # стоимость прокачки
+            buy_hp = round(500 * (1.5 * hp_level))
+            buy_speed = round(500 * (1.5 * speed_level))
+            buy_damage = round(500 * (1.5 * damage_level))
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    show_menu()
+                    pause = True
+                    show_pause()
+                if event.key == pygame.K_0:
+                    show_ng = True
+                    show_new_game()
                 if event.key == pygame.K_m:
                     end_game()
                 if event.key == pygame.K_LEFT:
@@ -1788,47 +1884,68 @@ def play():
         player_group.draw(screen)
         enemi_group.draw(screen)
         proj_group.draw(screen)
+        if boss and not gt:
+            show_ng = True
+            show_ng = True
+            show_new_game()
         # таймер
         time = f'{timer // 60 // 60}:{timer // 60 % 60}'
         font = pygame.font.SysFont('Consolas', 30)
         screen.blit(font.render(time, True, (0, 0, 0)), (245, 50))
         timer += 1
-        #hp bar
+        # hp bar
         pygame.draw.rect(screen, (255, 0, 0), (10, 10, player.heals * 0.1, 30))
         print_text(f"{round(player.heals * 0.1)}", hp / 2 - (5 * hp * 0.01), 12, (0, 0, 0), 20)
-        #иконка выходы в меню(паузы)
+        # иконка выходы в меню(паузы)
         move_icon = rect.move(450, 0)
         screen.blit(icon, move_icon)
-        #дерево талантов
+        # дерево талантов
         talant_tree.draw(0, 250, "", "tt")
         talant_tree_move = talant_rect.move(-4, 246)
+        ult_hp = hp_rect.move(0, 670)
+        ult_spped = speed_rect.move(0, 720)
+        ult_damage = damage_rect.move(0, 780)
         hp_move = hp_rect.move(0, 350)
-        speed_move = speed_rect.move(90, 350)
-        damage_move = damage_rect.move(180, 350)
+        speed_move = speed_rect.move(0, 450)
+        damage_move = damage_rect.move(0, 550)
         screen.blit(talant_tree_image, talant_tree_move)
         if tt_show:
             move_close_icon = close_rect.move(200, 300)
             close_tt.draw(200, 300, "x", "close_tt")
-            pygame.draw.rect(screen, (0, 0, 0), (0, 300, 250, 500))
+            pygame.draw.rect(screen, (0, 0, 0), (0, 300, 250, 700))
+            print_text("Skills", 70, 300, (255, 255, 255), 50)
+            print_text("Ultimate", 50, 620, (255, 255, 255), 50)
             screen.blit(close_tt_icon, move_close_icon)
-            #дерево талантов
-            print_text(f"{hp_level}", 10, 400, (255, 255, 255))
-            print_text(f"{speed_level}", 90, 400, (255, 255, 255))
-            print_text(f"{damage_level}", 190, 400, (255, 255, 255))
-            hp_up.draw(0, 460, "", "hp_up")
-            speed_up.draw(90, 460, "", "speed_up")
-            damage_up.draw(180, 460, "", "damage_up")
-            #иконки атрибутов
             screen.blit(hp_talant, hp_move)
             screen.blit(speed_talant, speed_move)
             screen.blit(damage_talant, damage_move)
-
-
-        #денюжки
+            screen.blit(hp_talant, ult_hp)
+            screen.blit(speed_talant, ult_spped)
+            screen.blit(damage_talant, ult_damage)
+            # дерево талантов
+            print_text(f"{hp_level}", 80, 350, (255, 255, 255))
+            print_text(f"{speed_level}", 80, 450, (255, 255, 255))
+            print_text(f"{damage_level}", 80, 550, (255, 255, 255))
+            if hp_level <= 5:
+                if player.gold >= buy_hp:
+                    hp_up.draw(120, 350, f"{buy_hp}", "hp_up")
+            if speed_level <= 5:
+                if player.gold >= buy_speed:
+                    speed_up.draw(120, 450, f"{buy_speed}", "speed_up")
+            if damage_level <= 5:
+                if player.gold >= buy_damage:
+                    damage_up.draw(120, 550, f"{buy_damage}", "damage_up")
+            if hp_level == 6:
+                hp_ult_btn.draw(100, 680, "", super_hp())
+            if speed_level == 6:
+                speed_ult_btn.draw(100, 730, "", super_speed())
+            if damage_level == 6:
+                damage_ult_btn.draw(100, 790, "", super_damage())
+        # денюжки
         move_gold_icon = gold_rect.move(0, 50)
         print_text(f"{player.gold}", 25, 50, (255, 255, 255), 20)
         screen.blit(gold_icon, move_gold_icon)
-        #hp bar boss
+        # hp bar boss
         if boss:
             pygame.draw.rect(screen, (255, 0, 0), (150, 100, georgis.heals * 0.02, 30))
             pygame.draw.rect(screen, (0, 0, 0), (150, 95, 10000 * 0.02, 40), 5)
