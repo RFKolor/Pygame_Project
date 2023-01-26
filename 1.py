@@ -43,7 +43,7 @@ mnoj_dmg_cube = 0.1
 mnoj_spavnrate_cube = 1.5
 heals_cube = 1
 damage_cube = 1
-spavnrate_cube = 10
+spavnrate_cube = 200
 mnoj_hp_zombie = 1
 mnoj_dmg_zombie = 1
 mnoj_spavnrate_zombie = 1
@@ -89,6 +89,7 @@ red_sun = False
 miss = False
 midas_curse = False
 chakram = False
+gostwalk = False
 
 
 class Button:
@@ -456,6 +457,7 @@ def show_new_game():
         print_text("You want to start NG", 70, 250, (166, 189, 215), 50)
         start_game_button.draw(0, 775, "Resume", "ng")
         quit_game_button.draw(400, 775, "Quit", "menu")
+        clear()
         pygame.display.flip()
 
 
@@ -465,13 +467,19 @@ def clear():
         heals_dragon, heals_cube, damage_cube, damage_zombie, damage_dragon, spavnrate_zombie, \
         spavnrate_dragon, spavnrate_cube, boss, gt, ultra, ultra_t, super_hp_t, super_hp_m, \
         super_hp_b, marks, markers, player_images, hp_level, speed_level, damage_level, \
-        slashform, damage, cursed, power, miss, red_sun, enemis_speed, chakram
+        slashform, damage, cursed, power, miss, red_sun, enemis_speed, chakram, gostwlak, \
+        shield_speed
+    for i in enemis:
+        i.kill()
+        i.heals = 0
+        i.live = False
     enemis = []
     proj = []
     eggs = []
     georg = []
     marks = []
     markers = []
+    player = None
     super_hp_t = False
     super_hp_m = False
     super_hp_b = False
@@ -481,6 +489,7 @@ def clear():
     miss = False
     red_sun = False
     chakram = False
+    gostwalk = False
     enemis_speed = 2
     hp_level = 1
     speed_level = 1
@@ -525,6 +534,7 @@ def clear():
     slashform = 0
     cursed = 0
     power = 0
+    shield_speed = 0
     cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
         damage_cube = damage_zombie = damage_dragon = spavnrate_zombie = spavnrate_dragon = \
         spavnrate_cube = 0
@@ -565,7 +575,7 @@ class Georgis(pygame.sprite.Sprite):
         self.rect = self.rect.move(500, 0)
 
     def mislitelniy_process(self):
-        global point, player_images, ultra_t
+        global point, player_images, ultra_t, gt
         if self.heals > 0:
             if self.rect.x < 0:
                 self.rect.x = 0
@@ -602,6 +612,7 @@ class Georgis(pygame.sprite.Sprite):
         else:
             self.kill()
             self.live = False
+            gt = False
             point += 1000
         if self.rect.collidelistall(proj):
             self.heals -= damage
@@ -1688,7 +1699,7 @@ def super_damage():
 
 
 def super_speed():
-    global player_images, miss, midas_curse, chakram
+    global player_images, miss, midas_curse, chakram, gostwalk
     if char_name == 'thorn':
         player_images = [load_image('super/thorn_miss.png'),
                          load_image('super/thorn_miss1-3.png'),
@@ -1708,6 +1719,12 @@ def super_speed():
     if char_name == 'bloodthief':
         chakram = True
 
+    if char_name == 'gostshell':
+        gostwalk = True
+        player_images = [load_image('super/gost_walk.png'),
+                         load_image('super/gost_walk1-3.png'),
+                         load_image('super/gost_walk2.png'),
+                         load_image('super/gost_walk1-3.png')]
 
 def generate(level):
     new_player, x, y = None, None, None
@@ -1753,7 +1770,7 @@ def play():
         damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
         spavnrate_spike, aura, damage, kills, old_kills, tt_show, ultra_t, player_images, \
         ultra, markers, marks, hp_level, speed_level, damage_level, pause, show_ng, shield, \
-        shield2, slash, damage
+        shield2, slash, damage, shield_speed
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -1789,7 +1806,7 @@ def play():
     old_kills = kills
     can_atak = 0
     frame_tick = 0
-    spavnrate_cub = 10
+    spavnrate_cub = 200
     spavnrate_zomb = 150
     spavnrate_drag = 500
     spavnrate_app = 550
@@ -1813,6 +1830,7 @@ def play():
     running = True
     shield = None
     shield2 = None
+    shield_speed = 0
     goup = godown = goleft = goright = False
     icon = load_image("menu_btn.png")
     rect = icon.get_rect()
@@ -1882,27 +1900,50 @@ def play():
         if char_name == 'gostshell':
             if shield == None:
                 if not red_sun:
-                    if kills > 3:
-                        shield = Shield()
-                        if super_hp_g:
-                            shield2 = Shield(1)
+                    if not gostwalk:
+                        if kills > 3:
+                            shield = Shield()
+                            if super_hp_g:
+                                shield2 = Shield(1)
+                            old_kills = kills
+                    else:
+                        if shield_speed >= 200:
+                            shield = Shield()
+                            if super_hp_g:
+                                shield2 = Shield(1)
+                            old_kills = kills
+                            shield_speed = 0
+                else:
+                    if not gostwalk:
+                        if kills > 0:
+                            shield = Shield()
+                            if super_hp_g:
+                                shield2 = Shield(1)
+                            old_kills = kills
+                    else:
+                        if shield_speed >= 50:
+                            shield = Shield()
+                            if super_hp_g:
+                                shield2 = Shield(1)
+                            old_kills = kills
+                            shield_speed = 0
+            else:
+                if not gostwalk:
+                    if kills > old_kills * shield.level:
+                        shield.levelup()
                         old_kills = kills
                 else:
-                    if kills > 0:
-                        shield = Shield()
-                        if super_hp_g:
-                            shield2 = Shield(1)
+                    if shield_speed >= (200 * shield.level):
+                        shield.levelup()
                         old_kills = kills
-            else:
-                if kills > old_kills * shield.level:
-                    shield.levelup()
-                    old_kills = kills
+                        shield_speed = 0
                 shield.mehanika()
                 if shield2 != None:
                     shield2.mehanika()
                 if shield.heals <= 0:
                     kills = 0
                     old_kills = 0
+                    shield_speed = 0
                     shield.mehanika()
                     shield = None
                 if shield2 != None:
@@ -2194,12 +2235,20 @@ def play():
                             can_atak = 0
         if godown:
             player.rect.y += player.speed
+            if gostwalk:
+                shield_speed += 1
         if goup:
             player.rect.y -= player.speed
+            if gostwalk:
+                shield_speed += 1
         if goleft:
             player.rect.x -= player.speed
+            if gostwalk:
+                shield_speed += 1
         if goright:
             player.rect.x += player.speed
+            if gostwalk:
+                shield_speed += 1
         camera.update(player)
         for sprite in all_sprites:
             camera.apply(sprite)
