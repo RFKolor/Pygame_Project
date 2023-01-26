@@ -474,7 +474,7 @@ def clear():
         spavnrate_dragon, spavnrate_cube, boss, gt, ultra, ultra_t, super_hp_t, super_hp_m, \
         super_hp_b, marks, markers, player_images, hp_level, speed_level, damage_level, \
         slashform, damage, cursed, power, miss, red_sun, enemis_speed, chakram, gostwlak, \
-        shield_speed
+        shield_speed, super_hp_g, midas_curse, gostwalk
     for i in enemis:
         i.kill()
         i.heals = 0
@@ -488,7 +488,10 @@ def clear():
     player = None
     super_hp_t = False
     super_hp_m = False
+    gostwalk = False
     super_hp_b = False
+    super_hp_g = False
+    midas_curse = False
     ultra = False
     ultra_t = False
     boss = gt = False
@@ -541,9 +544,7 @@ def clear():
     cursed = 0
     power = 0
     shield_speed = 0
-    cube_point = dragon_point = zombie_point = heals_zombie = heals_dragon = heals_cube = \
-        damage_cube = damage_zombie = damage_dragon = spavnrate_zombie = spavnrate_dragon = \
-        spavnrate_cube = 0
+    cube_point = dragon_point = zombie_point = apparat_point = spike_point = 1
     if char_name == 'midas':
         player_images = [load_image('chars/midas.png'), load_image('chars/midas1-3.png'),
                          load_image('chars/midas2.png'), load_image('chars/midas1-3.png')]
@@ -650,9 +651,15 @@ class Georgis(pygame.sprite.Sprite):
                         player.heals += player.max_heals
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
 
     def bomb_atak(self):
@@ -755,6 +762,9 @@ class Egg(pygame.sprite.Sprite):
                     ultra_t = True
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
             elif super_hp_m:
                 if player.gold >= 1000:
@@ -762,6 +772,9 @@ class Egg(pygame.sprite.Sprite):
                     player.heals += player.max_heals
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
             else:
                 player.kill()
@@ -856,7 +869,7 @@ class Cube(pygame.sprite.Sprite):
                 self.heals -= damage
             else:
                 if super_hp_b:
-                    self.heals -= damage / 2
+                    self.heals -= damage // 2
                     self.damage = 0
                 else:
                     self.heals -= damage * 3
@@ -881,6 +894,9 @@ class Cube(pygame.sprite.Sprite):
                         ultra_t = True
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 elif super_hp_m:
                     if player.gold >= 1000:
@@ -888,9 +904,15 @@ class Cube(pygame.sprite.Sprite):
                         player.heals += player.max_heals
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
 
     def animate(self):
@@ -965,7 +987,7 @@ class Zombie(pygame.sprite.Sprite):
                 self.heals -= damage
             else:
                 if super_hp_b:
-                    self.heals -= damage / 2
+                    self.heals -= damage // 2
                     self.damage = 0
                 else:
                     self.heals -= damage * 3
@@ -990,6 +1012,9 @@ class Zombie(pygame.sprite.Sprite):
                         ultra_t = True
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 elif super_hp_m:
                     if player.gold >= 1000:
@@ -997,9 +1022,15 @@ class Zombie(pygame.sprite.Sprite):
                         player.heals += player.max_heals
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
 
     def animate(self):
@@ -1081,7 +1112,7 @@ class Dragon(pygame.sprite.Sprite):
                 self.heals -= damage
             else:
                 if super_hp_b:
-                    self.heals -= damage / 2
+                    self.heals -= damage // 2
                     self.damage = 0
                 else:
                     self.heals -= damage * 3
@@ -1106,6 +1137,9 @@ class Dragon(pygame.sprite.Sprite):
                         ultra_t = True
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 elif super_hp_m:
                     if player.gold >= 1000:
@@ -1113,9 +1147,15 @@ class Dragon(pygame.sprite.Sprite):
                         player.heals += player.max_heals
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
 
     def animate(self):
@@ -1197,7 +1237,7 @@ class Apparat(pygame.sprite.Sprite):
                 self.heals -= damage
             else:
                 if super_hp_b:
-                    self.heals -= damage / 2
+                    self.heals -= damage // 2
                     self.damage = 0
                 else:
                     self.heals -= damage * 3
@@ -1222,6 +1262,9 @@ class Apparat(pygame.sprite.Sprite):
                         ultra_t = True
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 elif super_hp_m:
                     if player.gold >= 1000:
@@ -1229,9 +1272,15 @@ class Apparat(pygame.sprite.Sprite):
                         player.heals += player.max_heals
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
 
     def animate(self):
@@ -1313,7 +1362,7 @@ class Spike(pygame.sprite.Sprite):
                 self.heals -= damage
             else:
                 if super_hp_b:
-                    self.heals -= damage / 2
+                    self.heals -= damage // 2
                     self.damage = 0
                 else:
                     self.heals -= damage * 3
@@ -1338,6 +1387,9 @@ class Spike(pygame.sprite.Sprite):
                         ultra_t = True
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 elif super_hp_m:
                     if player.gold >= 1000:
@@ -1345,9 +1397,15 @@ class Spike(pygame.sprite.Sprite):
                         player.heals += player.max_heals
                     else:
                         player.kill()
+                        for i in proj:
+                            i.kill()
+                            proj.remove(i)
                         end_game()
                 else:
                     player.kill()
+                    for i in proj:
+                        i.kill()
+                        proj.remove(i)
                     end_game()
 
     def animate(self):
@@ -2125,7 +2183,8 @@ def play():
                     markers.remove(i)
                     kills += 1
                     player.heals /= 1.2
-                    damage -= 10
+                    if power != 0:
+                        damage -= 10
         for j in proj:
             j.go()
             if cursed == 1:
