@@ -113,6 +113,7 @@ class Button:
                         if function == "exit":
                             terminate()
                         elif function == "play":
+                            clear()
                             play()
                         elif function == "menu":
                             show_menu()
@@ -142,7 +143,6 @@ class Button:
                             tt_show = True
                         elif function == "close_tt":
                             tt_show = False
-                            print("close")
                         elif function == "hp_up":
                             hp_level += 1
                             player.max_heals += 100 * hp_level
