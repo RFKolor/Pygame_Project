@@ -124,14 +124,19 @@ class Button:
                         # для выборы героев
                         elif function == "midas":
                             char_name = "midas"
+                            show_menu()
                         elif function == "shaman":
                             char_name = "shaman"
+                            show_menu()
                         elif function == "gostshell":
                             char_name = "gostshell"
+                            show_menu()
                         elif function == "bloodthief":
                             char_name = "bloodthief"
+                            show_menu()
                         elif function == "thorn":
                             char_name = "thorn"
+                            show_menu()
                         # tt - tree talant
                         elif function == "tt":
                             tt_show = True
