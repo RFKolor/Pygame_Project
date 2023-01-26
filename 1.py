@@ -140,17 +140,18 @@ class Button:
                             print("close")
                         elif function == "hp_up":
                             hp_level += 1
+                            player.max_heals += 100 * hp_level
                             player.heals += 100 * hp_level
-                            player.gold -= round(500 * (1.5 * hp_level))
+                            player.gold -= round(500 * (1.5 * hp_level)) // 2
                         elif function == "speed_up":
                             speed_level += 1
                             player.atakspeed -= 2
                             player.speed += 0.5
-                            player.gold -= round(500 * (1.5 * speed_level))
+                            player.gold -= round(500 * (1.5 * speed_level)) // 2
                         elif function == "damage_up":
                             damage_level += 1
                             damage += 10 * damage_level
-                            player.gold -= round(500 * (1.5 * damage_level))
+                            player.gold -= round(500 * (1.5 * damage_level)) // 2
                         elif function == "unpause":
                             pause = False
                         elif function == "pause":
@@ -169,8 +170,9 @@ def print_text(text, x, y, font_color=(0, 0, 0), font_size=50):
 
 
 def show_pause():
-    global pause
+    global pause, godown, goleft, goright, goup
     image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
+    godown = goleft = goright = goup = False
     start_game_button = Button(170, 70)
     quit_game_button = Button(100, 70)
     while pause:
@@ -216,6 +218,7 @@ def settings():
 
 # главное меню
 def show_menu():
+    clear()
     pygame.mixer.music.load("data/menu.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -436,10 +439,8 @@ def end_game():
 
 
 def show_new_game():
-    global music_volume, show_ng
-    pygame.mixer.music.load("data/menu.mp3")
-    pygame.mixer.music.set_volume(music_volume)
-    pygame.mixer.music.play(-1)
+    global music_volume, show_ng, godown, goleft, goright, goup
+    godown = goleft = goright = goup = False
     image_background = pygame.image.load("data/menu_bg.png").convert_alpha()
     start_game_button = Button(170, 70)
     quit_game_button = Button(100, 70)
@@ -563,7 +564,7 @@ class Georgis(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(enemi_group, all_sprites)
         global eggs
-        self.heals = 10000
+        self.heals = 100000
         self.maxheals = self.heals
         self.live = True
         self.frame = 0
@@ -1465,9 +1466,29 @@ class Slash(pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.rect = self.rect.move(x, y)
             self.heals = 50
-            if len(markers) > 0:
-                self.rastoyanie_x = self.rect.x - markers[0].rect.x
-                self.rastoyanie_y = self.rect.y - markers[0].rect.y
+            if len(georg) == 0:
+                if len(markers) > 0:
+                    self.rastoyanie_x = self.rect.x - markers[0].rect.x
+                    self.rastoyanie_y = self.rect.y - markers[0].rect.y
+                    if self.rastoyanie_y != 0 and self.rastoyanie_x != 0:
+                        if abs(self.rastoyanie_x) > abs(self.rastoyanie_y):
+                            koef = abs(self.rastoyanie_x) / abs(self.rastoyanie_y)
+                            self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                                          5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)) / koef)
+                        elif abs(self.rastoyanie_x) < abs(self.rastoyanie_y):
+                            koef = abs(self.rastoyanie_y) / abs(self.rastoyanie_x)
+                            self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)) / koef,
+                                          5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+                        else:
+                            self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
+                                          5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+                    elif self.rastoyanie_x == 0 and self.rastoyanie_y != 0:
+                        self.speed[1] = 5 * -(self.rastoyanie_y / abs(self.rastoyanie_y))
+                    elif self.rastoyanie_y == 0 and self.rastoyanie_x != 0:
+                        self.speed[0] = 5 * -(self.rastoyanie_x / abs(self.rastoyanie_x))
+            else:
+                self.rastoyanie_x = self.rect.x - georg[0].rect.x
+                self.rastoyanie_y = self.rect.y - georg[0].rect.y
                 if self.rastoyanie_y != 0 and self.rastoyanie_x != 0:
                     if abs(self.rastoyanie_x) > abs(self.rastoyanie_y):
                         koef = abs(self.rastoyanie_x) / abs(self.rastoyanie_y)
@@ -1476,7 +1497,7 @@ class Slash(pygame.sprite.Sprite):
                     elif abs(self.rastoyanie_x) < abs(self.rastoyanie_y):
                         koef = abs(self.rastoyanie_y) / abs(self.rastoyanie_x)
                         self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)) / koef,
-                                      5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
+                                          5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
                     else:
                         self.speed = (5 * -(self.rastoyanie_x / abs(self.rastoyanie_x)),
                                       5 * -(self.rastoyanie_y / abs(self.rastoyanie_y)))
@@ -1556,7 +1577,7 @@ class Aura(pygame.sprite.Sprite):
                 else:
                     i.heals -= i.maxheals / 1000
         if self.druid:
-            if player.heals != player.max_heals:
+            if player.heals < player.max_heals:
                 player.heals += player.max_heals / 2000
         if self.red_blades:
             if self.frame == 2:
@@ -1770,7 +1791,7 @@ def play():
         damage_apparat, spavnrate_apparat, spike_point, heals_spike, damage_spike, \
         spavnrate_spike, aura, damage, kills, old_kills, tt_show, ultra_t, player_images, \
         ultra, markers, marks, hp_level, speed_level, damage_level, pause, show_ng, shield, \
-        shield2, slash, damage, shield_speed
+        shield2, slash, damage, shield_speed, goup, godown, goleft, goright
     pygame.mixer.music.load("data/gameplay_music.mp3")
     pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)
@@ -1806,6 +1827,11 @@ def play():
     old_kills = kills
     can_atak = 0
     frame_tick = 0
+    spavnrate_cube = 200
+    spavnrate_zombie = 150
+    spavnrate_dragon = 500
+    spavnrate_apparat = 550
+    spavnrate_spike = 150
     spavnrate_cub = 200
     spavnrate_zomb = 150
     spavnrate_drag = 500
@@ -2072,9 +2098,9 @@ def play():
         if boss:
             show_boss_hp_bar = True
             if georg[0].live == False:
-                end_game()
-                boss = False
                 gt = False
+                for i in eggs:
+                    i.kill()
                 ng_plus()
         can_atak += 1
         frame_tick += 1
@@ -2320,7 +2346,7 @@ def play():
         screen.blit(gold_icon, move_gold_icon)
         # hp bar boss
         if boss:
-            pygame.draw.rect(screen, (255, 0, 0), (150, 100, georgis.heals * 0.02, 30))
+            pygame.draw.rect(screen, (255, 0, 0), (150, 100, georgis.heals * 0.002, 30))
             pygame.draw.rect(screen, (0, 0, 0), (150, 95, 10000 * 0.02, 40), 5)
             print_text(f"{round(georgis.heals * 0.1)}", 170, 100, (0, 0, 0), 30)
         pygame.display.flip()
