@@ -20,7 +20,7 @@ enemis = []
 enemis_speed = 2
 damage = 5
 music_volume = 0.5
-# костыль чтобы слайдер корректно работал
+# инициализация slider
 slider = Slider(screen, 25, 200, 300, 20, min=0, max=100, step=1, colour=(76, 81, 74),
                 handleColour=(255, 255, 255))
 show_boss_hp_bar = False
